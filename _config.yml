@@ -18,18 +18,25 @@
 # You can create any custom variable you would like, and they will be accessible
 # in the templates via {{ site.myvariable }}.
 
-title: Hemslo
-email: hemslo.wang@gmail.com
+title: Hemslo Wang's Blog
 description: >- # this means to ignore newlines until "baseurl:"
     Hemslo Wang's Blog
 baseurl: "" # the subpath of your site, e.g. /blog
 url: "https://hemslo.io" # the base hostname & protocol for your site, e.g. http://example.com
-github_username: hemslo
 
 # Build settings
-theme: minima
+remote_theme: jekyll/minima
+
+minima:
+  skin: auto
+  social_links:
+    github: hemslo
+
+google_analytics: G-1S8YNYJKMB
+
 plugins:
   - jekyll-feed
+  - jekyll-remote-theme
 
 # Exclude from processing.
 # The following items will not be processed, by default.
