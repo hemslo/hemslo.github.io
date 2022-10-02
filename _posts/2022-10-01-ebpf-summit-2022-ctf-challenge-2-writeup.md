@@ -286,4 +286,4 @@ This is an easy challenge, but it covers the basic usage of eBPF.
 Especially, the handy tool `bpftool`,
 the best learning resource is this [youtube video](https://youtu.be/1EOLh3zzWP4) by it's creator Quentin Monnet.
 
-Now we proceed to the next challenge.
+Now we proceed to the [next challenge](/ebpf-summit-2022-ctf-challenge-3-writeup/).
