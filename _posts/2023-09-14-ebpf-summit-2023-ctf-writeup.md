@@ -117,6 +117,17 @@ GJ4xMFOoFRSFES5XFFq7MFO8LKZtnJ9trJ46pvOeMKWhMJjtMz4lVSf0Zl9mZwtmBQLtp7Iwo70xp65X
 ```
 
 The same method can be used for both easy and hard mode, I haven't checked their differences yet.
+
+Update: Revealed in [eCHO Episode 107: eBPF Summit CTF Walkthrough](https://www.youtube.com/watch?v=PYeRuRtI55M).
+Easy mode can expose pid in system log
+
+```shell
+$ dmesg
+[  523.951058] ebpf.summit.202[3385] is installing a program with bpf_probe_write_user helper that may corrupt user memory!
+```
+
+While hard mode will clear system log.
+
 I actually solved it before the event started so I can focus on summit talks.
 However, when approaching to the end of the event, I saw a message from host:
 
