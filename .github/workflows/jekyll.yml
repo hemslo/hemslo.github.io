@@ -28,3 +28,11 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
+  crawl:
+    runs-on: ubuntu-latest
+    needs: deploy
+    env:
+      GH_TOKEN: ${{ secrets.CHAT_SEARCH_CRAWL_TOKEN }}
+    steps:
+      - name: Crawl
+        run: gh workflow run crawl.yml -R hemslo/chat-search -f sitemap-url=https://hemslo.io/sitemap.xml
