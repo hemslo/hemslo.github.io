@@ -11,7 +11,7 @@ It's very easy now to add a chatbot to your website or application.
 
 I created a simple tool [chat-search](https://github.com/hemslo/chat-search),
 and setup a demo for my [blog](https://hemslo.io/chat/).
-You can ask questions like "How to chat with documents?"
+You can ask questions like "How to chat search with documents?"
 and it will answer based on this post you are reading.
 
 Now let's walk through the process of building it.
