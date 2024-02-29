@@ -10,7 +10,6 @@ This is the writeup for the third challenge of eBPF Summit 2022 CTF.
 See [writeup for challenge 2](/ebpf-summit-2022-ctf-challenge-2-writeup/) for the previous setup.
 The challenge details can be found [here](https://github.com/isovalent/eBPF-Summit-2022-CTF#challenge-3).
 
-
 ## 0x01 Information Gathering
 
 The first step is to find out what's running in the cluster.
@@ -18,7 +17,7 @@ The first step is to find out what's running in the cluster.
 Note: if you shell into the VM, you need to set `KUBECONFIG` before using `kubectl`.
 
 ```shell
-$ export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
 ```
 
 ```shell
@@ -216,15 +215,15 @@ $ sudo crictl inspect 19f4d67df58afe4889a504d11684a5696f9ce008955962bc05c3171530
 Then we can use `nsenter` to enter the namespace of the container.
 
 ```shell
-$ sudo nsenter -t 10481 -n ip link show
+sudo nsenter -t 10481 -n ip link show
 ```
 
-### 0x02 Exploit
+## 0x02 Exploit
 
 Detach the xdp program from the interface.
 
 ```shell
-$ sudo ip netns exec cni-52ff6a2f-66c3-b385-5ed0-f5e922a87859 bpftool net detach xdp dev eth0
+sudo ip netns exec cni-52ff6a2f-66c3-b385-5ed0-f5e922a87859 bpftool net detach xdp dev eth0
 ```
 
 Check again
@@ -292,7 +291,7 @@ spec:
 Apply the policy.
 
 ```shell
-$ kubectl apply -f ctf-policy.yaml
+kubectl apply -f ctf-policy.yaml
 ```
 
 Then check the log again.
@@ -314,13 +313,13 @@ Back to the debug shell again.
 ```shell
 $ # kubectl debug -ti challenge-3-7465fc8b59-vwgwf --target=ctfapp --image=busybox
 $ nslookup docs.cilium.io
-Server:		10.43.0.10
-Address:	10.43.0.10:53
+Server:  10.43.0.10
+Address: 10.43.0.10:53
 
 Non-authoritative answer:
-Name:	docs.cilium.io
+Name: docs.cilium.io
 Address: 104.17.32.82
-Name:	docs.cilium.io
+Name: docs.cilium.io
 Address: 104.17.33.82
 
 $ wget https://docs.cilium.io
@@ -345,9 +344,10 @@ Case closed.
 
 ![image](/assets/images/ebpf-summit-ctf-3.png)
 
-### 0x03 Conclusion
+## 0x03 Conclusion
 
 This challenge is a little harder than the previous one, it requires some knowledge about XDP and Cilium network policy.
 There are 2 good eCHO episodes covering both.
+
 * [eCHO episode 13: XDP Hands-on Tutorial](https://youtu.be/YUI78vC4qSQ)
 * [eCHO Episode 43: Deep dive on FQDN Policy](https://youtu.be/iJ98HRZi8hM)

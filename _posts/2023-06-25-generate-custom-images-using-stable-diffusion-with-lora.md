@@ -36,7 +36,7 @@ The tools we need are:
 The tasks are:
 
 * Fine tune a LoRA model with Ciri images
-* Find a shared LoRA model of Cyberpunk style 
+* Find a shared LoRA model of Cyberpunk style
 * Generate a image of Ciri in Cyberpunk style
 
 ### Prepare
@@ -57,8 +57,9 @@ The tasks are:
 
     accelerate config
     ```
-  Note if you are using newer cuda version, you may need to bump `bitsandbytes` version to latest,
-  see this [PR](https://github.com/kohya-ss/sd-scripts/pull/465).
+
+    Note if you are using newer cuda version, you may need to bump `bitsandbytes` version to latest,
+    see this [PR](https://github.com/kohya-ss/sd-scripts/pull/465).
 
 3. Setup [Stable Diffusion web UI](https://github.com/AUTOMATIC1111/stable-diffusion-webui),
     follow [wiki](https://github.com/AUTOMATIC1111/stable-diffusion-webui/wiki/Install-and-Run-on-NVidia-GPUs).
@@ -97,9 +98,10 @@ you may find English translated document [here](https://github.com/darkstorm2150
     image_dir = 'PATH_TO_CIRI_IMAGES'
     class_tokens = 'ciri_w3'
     ```
+
 4. Prepare a text file for sample prompts, `sample_prompts.txt`:
 
-    ```
+    ```text
     ciri_w3
     ```
 
@@ -130,9 +132,9 @@ you may find English translated document [here](https://github.com/darkstorm2150
 
 6. Start training under `sd-scripts` dir:
 
-```bash
-accelerate launch --num_cpu_threads_per_process 1 train_network.py --config_file="PATH_TO_TRAIN_CONFIG_TOML_ABOVE"
-```
+    ```bash
+    accelerate launch --num_cpu_threads_per_process 1 train_network.py --config_file="PATH_TO_TRAIN_CONFIG_TOML_ABOVE"
+    ```
 
 7. During training, can inspect sample images under output dir
 
@@ -151,9 +153,9 @@ Now that we have a fine tuned model for Ciri and a shared model for Cyberpunk st
 
 1. Start web ui under `stable-diffusion-webui` dir:
 
-```bash
-./webui.sh --xformers
-```
+    ```bash
+    ./webui.sh --xformers
+    ```
 
 2. Visit [http://127.0.0.1:7860/](http://127.0.0.1:7860/)
 
@@ -162,12 +164,14 @@ Now that we have a fine tuned model for Ciri and a shared model for Cyberpunk st
 4. Find some example prompts from shared model, like [this one looks like Lucy](https://civitai.com/images/364373?modelVersionId=32037&prioritizedUserIds=53515&period=AllTime&sort=Most+Reactions&limit=20)
 
 5. Adjust prompt to suit our need
-    ```
+
+    ```text
     cyberpunk edgerunners, (ciri_w3), bare shoulders, leotard, looking at viewer, off-shoulder jacket, off shoulder, sleeveless turtleneck leotard, solo, turtleneck leotard, night city, holding a katana, moon in background, ((masterpiece)) <lora:cyberpunk_edgerunners_offset:1> <lora:ciri_w3_anylora:0.7>
     ```
 
 6. Negative prompt
-    ```
+
+    ```text
     (painting by bad-artist-anime:0.9), (painting by bad-artist:0.9), watermark, text, error, blurry, jpeg artifacts, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, artist name, (worst quality, low quality:1.4), bad anatomy
     ```
 

@@ -18,7 +18,7 @@ The first step is to find out what's running in the cluster.
 Note: if you shell into the VM, you need to set `KUBECONFIG` before using `kubectl`.
 
 ```shell
-$ export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
 ```
 
 ```shell
@@ -101,11 +101,11 @@ libbpf: map 'map_bpf.rodata': created successfully, fd=5
 
 From the log we can find several interesting things:
 
-  * The `ctfapp` container is running a BPF program.
-  * The BPF program is using
-    * a map named `ctf_flag`.
-    * a prog named `hello`.
-    * a hook named `syscalls/sys_enter_fchmodat`.
+* The `ctfapp` container is running a BPF program.
+* The BPF program is using
+  * a map named `ctf_flag`.
+  * a prog named `hello`.
+  * a hook named `syscalls/sys_enter_fchmodat`.
 
 Inspect them one by one from VM.
 
@@ -113,16 +113,16 @@ Inspect them one by one from VM.
 $ sudo bpftool map show
 ...
 221: hash  name summit2022  flags 0x0
-	key 4B  value 20B  max_entries 4  memlock 4096B
+ key 4B  value 20B  max_entries 4  memlock 4096B
 225: array  name packetdr.rodata  flags 0x480
-	key 4B  value 21B  max_entries 1  memlock 4096B
-	btf_id 295  frozen
+ key 4B  value 21B  max_entries 1  memlock 4096B
+ btf_id 295  frozen
 229: hash  name ctf_flag  flags 0x0
-	key 4B  value 12B  max_entries 10240  memlock 163840B
-	btf_id 301
+ key 4B  value 12B  max_entries 10240  memlock 163840B
+ btf_id 301
 231: array  name map_bpf.rodata  flags 0x480
-	key 4B  value 53B  max_entries 1  memlock 4096B
-	btf_id 301  frozen
+ key 4B  value 53B  max_entries 1  memlock 4096B
+ btf_id 301  frozen
 ```
 
 ```shell
@@ -233,8 +233,9 @@ int hello(void * ctx):
 ```
 
 By reading the code, we can see the main logic for this tracepoint is:
-  * Check if the process name is `ch**d`.
-  * If yes, update the map `ctf_flag` with key `1` and value `82 50 45 68 50 0`.
+
+* Check if the process name is `ch**d`.
+* If yes, update the map `ctf_flag` with key `1` and value `82 50 45 68 50 0`.
 
 ```python
 >>> list(map(chr, [82,50,45,68,50,0]))
@@ -243,12 +244,11 @@ By reading the code, we can see the main logic for this tracepoint is:
 
 So we actually got the flag already, but let's keep playing.
 
-
-### 0x02 Exploit
+## 0x02 Exploit
 
 ```shell
-$ touch a.txt
-$ chmod 777 a.txt
+touch a.txt
+chmod 777 a.txt
 ```
 
 let's take a look at logs.
@@ -280,7 +280,7 @@ Case closed.
 
 ![image](/assets/images/ebpf-summit-ctf-2.png)
 
-### 0x03 Conclusion
+## 0x03 Conclusion
 
 This is an easy challenge, but it covers the basic usage of eBPF.
 Especially, the handy tool `bpftool`,

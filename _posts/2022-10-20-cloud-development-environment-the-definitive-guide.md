@@ -12,19 +12,18 @@ development environment?
 
 In this post, I will show you how to set up a flexible and powerful cloud
 development environment. In the end, we will achieve the ultimate goal:
-
 **Develop Any Code, Anywhere, Anytime**
 
 I will cover a few tools and techniques, including
 
-  * [Vagrant](https://www.vagrantup.com/)
-  * [Docker](https://www.docker.com/)
-  * [VS Code Remote Development](https://code.visualstudio.com/docs/remote/remote-overview)
-  * [JetBrains Remote Development](https://www.jetbrains.com/remote-development/)
-  * [Development Containers](https://containers.dev/)
-  * [GitHub Codespaces](https://github.com/features/codespaces)
+* [Vagrant](https://www.vagrantup.com/)
+* [Docker](https://www.docker.com/)
+* [VS Code Remote Development](https://code.visualstudio.com/docs/remote/remote-overview)
+* [JetBrains Remote Development](https://www.jetbrains.com/remote-development/)
+* [Development Containers](https://containers.dev/)
+* [GitHub Codespaces](https://github.com/features/codespaces)
 
-### Vagrant
+## Vagrant
 
 [Vagrant](https://www.vagrantup.com/) is a tool for building and managing
 virtual machine environments. It supports multiple providers,
@@ -53,7 +52,7 @@ with others, so we can easily set up the same environment for other
 developers. There are many public boxes available on
 [Vagrant Cloud](https://app.vagrantup.com/boxes/search).
 
-### Docker
+## Docker
 
 [Docker](https://www.docker.com/) is mainly used for building and running
 containerized applications. But with proper setup, it can also be used as a
@@ -77,7 +76,8 @@ We can't use the IDE/editor without installing dependencies on the host.
 If it's not done properly, it can cause a lot of troubles such as it works
 on the host but not in the container, or vice versa.
 
-### VS Code Remote Development
+## VS Code Remote Development
+
 [VS Code Remote Development](https://code.visualstudio.com/docs/remote/remote-overview)
 is a game changer for cloud development environment. It will start a remote
 code server to handle all heavy work such as auto-completion, refactor,
@@ -98,7 +98,7 @@ detect port forwarding. You can even setup a
 [code server](https://github.com/coder/code-server) on a remote server, then
 edit code in the browser.
 
-### JetBrains Remote Development
+## JetBrains Remote Development
 
 [JetBrains Remote Development](https://www.jetbrains.com/remote-development/)
 is very similar to VS Code Remote Development. It also starts a remote IDE
@@ -108,7 +108,7 @@ backend to handle all the processing. IDE on host talks to the backend via
 The biggest advantage of JetBrains Remote Development is that it has powerful
 refactor support, same experience as local development when network is good.
 
-### Development Containers
+## Development Containers
 
 [Development Containers](https://containers.dev/) is a new concept introduced
 by VS Code. The basic idea is to use a container as development environment.
@@ -138,7 +138,7 @@ If the development environment is complex, you can use multiple containers
 together, it has
 [docker compose support](https://code.visualstudio.com/remote/advancedcontainers/connect-multiple-containers).
 
-### GitHub Codespaces
+## GitHub Codespaces
 
 [GitHub Codespaces](https://github.com/features/codespaces) is a new service
 on GitHub that provides cloud development environment. It's based on Development
@@ -150,7 +150,7 @@ so you can customize the environment by extracting your own dotfiles to a
 repository, then Codespaces will automatically execute it when creating a new
 environment.
 
-### Combo
+## Combo
 
 To get the best experience, we can combine multiple tools together.
 
@@ -164,7 +164,7 @@ virtual machines, or access some features only available on host, then we can
 use Vagrant to create a virtual machine, and use VS Code Remote Development or
 JetBrains Remote Development to connect to it.
 
-### Conclusion
+## Conclusion
 
 Cloud development environment can greatly boost developer productivity, and
 improve developer experience. With the help of new tools like devcontainer,

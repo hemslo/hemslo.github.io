@@ -20,17 +20,17 @@ All commands are executed as `root`.
 Check current `/ebpf.summit` content :
 
 ```shell
-$ cat /ebpf.summit
+cat /ebpf.summit
 ```
 
-```
+```text
 I've been in your kernel for [22.109948 seconds]
 ```
 
 Check which process is reading `/etc/passwd` :
 
 ```shell
-$ lsof /etc/passwd
+lsof /etc/passwd
 ```
 
 No output, either the process is not holding the fd or it's invisible.
@@ -38,10 +38,10 @@ No output, either the process is not holding the fd or it's invisible.
 Check if the process in provision is still running:
 
 ```shell
-$ ps aux | grep ebpf
+ps aux | grep ebpf
 ```
 
-```
+```text
 root       12474  0.0  0.0   6420  1844 pts/1    S+   08:10   0:00 grep --color=auto ebpf
 ```
 
@@ -58,26 +58,26 @@ And `bpftool` to further investigate the eBPF programs.
 Install tools first:
 
 ```shell
-$ apt install bpftrace bpfcc-tools linux-headers-$(uname -r)
+apt install bpftrace bpfcc-tools linux-headers-$(uname -r)
 ```
 
 Check which process is opening `/etc/passwd` using `opensnoop`:
 
 ```shell
-$ opensnoop-bpfcc | grep "/etc/passwd"
+opensnoop-bpfcc | grep "/etc/passwd"
 ```
 
-```
+```text
 2372   ebpf.summit.202    18   0 /etc/passwd
 ```
 
 Or a one line `bpftrace` script:
 
 ```shell
-$ bpftrace -e 'tracepoint:syscalls:sys_enter_openat /str(args->filename) == "/etc/passwd"/ { printf("%d %s \n", pid, comm); }'
+bpftrace -e 'tracepoint:syscalls:sys_enter_openat /str(args->filename) == "/etc/passwd"/ { printf("%d %s \n", pid, comm); }'
 ```
 
-```
+```text
 Attaching 1 probe...
 2372 ebpf.summit.202
 ```
@@ -87,16 +87,16 @@ Attaching 1 probe...
 Kill the process
 
 ```shell
-$ kill 2372
+kill 2372
 ```
 
 Check the flag
 
 ```shell
-$ cat /ebpf.summit
+cat /ebpf.summit
 ```
 
-```
+```text
 You purged the computers of the malware - and not a second too late. Congratula
 tions! The location of the base remains a secret. Maybe not for long though, wh
 ile everyone was focusing on the computers, Bajeroff Lake, the traitor, managed
@@ -131,7 +131,7 @@ While hard mode will clear system log.
 I actually solved it before the event started so I can focus on summit talks.
 However, when approaching to the end of the event, I saw a message from host:
 
-```
+```text
 For glory points, has anyone cracked the code? 
 ```
 
@@ -156,7 +156,7 @@ use `Ghidra` to decompile the `main` function.
 
 Ok, the flag is encoded by `base64` then `rot13rot5` ([rot18](https://en.wikipedia.org/wiki/ROT13#Variants)).
 
-To decode it, can use online decoders, or life is short, use python: 
+To decode it, can use online decoders, or life is short, use python:
 
 ```python
 import string
@@ -228,18 +228,18 @@ spec:
 Start tetragon with this policy:
 
 ```shell
-$ tetragon --tracing-policy tracing_policy.yaml
+tetragon --tracing-policy tracing_policy.yaml
 ```
 
 Then start the challenge:
 
 ```shell
-$ HARDMODE=true /tmp/ebpf.summit.2023
+HARDMODE=true /tmp/ebpf.summit.2023
 ```
 
 Check the flag in `/ebpf.summit`:
 
-```
+```text
 GJ4xMFOoFRSFES5XFFq7MFO8LKZtnJ9trJ46pvOeMKWhMJjtMz4lVSfjYwNjZQN8APOmMJAiozEmKDb=
 ```
 
@@ -266,12 +266,12 @@ like [bad-bpf](https://github.com/pathtofile/bad-bpf) or [boopkit](https://githu
 To see if this is the case, check the eBPF programs:
 
 ```shell
-$ bpftool prog show
+bpftool prog show
 ```
 
 There are some matching ones:
 
-```
+```text
 27: tracepoint  name handle_getdents  tag 5fa666123368aa3b  gpl
         loaded_at 2023-09-14T13:55:09+0000  uid 0
         xlated 296B  jited 173B  memlock 4096B  map_ids 37,38
@@ -289,33 +289,33 @@ There are some matching ones:
 Inspect them to confirm:
 
 ```shell
-$ bpftool prog dump x id 27 | grep getdents
+bpftool prog dump x id 27 | grep getdents
 ```
 
-```
+```text
 int handle_getdents_enter(struct trace_event_raw_sys_enter * ctx):
 ; int handle_getdents_enter(struct trace_event_raw_sys_enter *ctx)
 ```
 
 ```shell
-$ bpftool prog dump x id 28 | grep getdents
+bpftool prog dump x id 28 | grep getdents
 ```
 
-```
+```text
 int handle_getdents_exit(struct trace_event_raw_sys_exit * ctx):
 ; int handle_getdents_exit(struct trace_event_raw_sys_exit *ctx)
 ```
 
 ```shell
-$ bpftool prog dump x id 29 | grep getdents
+bpftool prog dump x id 29 | grep getdents
 ```
 
-```
+```text
 int handle_getdents_patch(struct trace_event_raw_sys_exit * ctx):
 ```
 
 It can fool `ps` because `ps` is using `getdents` to get processes info.
-But it can't avoid detection from other eBPF tools. Or can it? Sounds familiar? 
+But it can't avoid detection from other eBPF tools. Or can it? Sounds familiar?
 
 > You Dare Use My Own Spells Against Me
 

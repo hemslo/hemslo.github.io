@@ -39,9 +39,9 @@ Check results under `dataset_raw/{speaker_id}/`, remove any samples that are too
 Then run some other pre process steps:
 
 ```bash
-$ svc pre-resample
-$ svc pre-config
-$ svc pre-hubert -fm crepe
+svc pre-resample
+svc pre-config
+svc pre-hubert -fm crepe
 ```
 
 ### 4. Train model
@@ -49,7 +49,7 @@ $ svc pre-hubert -fm crepe
 This step will take a long time. In my case, with RTX 4070, batch size 16, about 2k voice samples, it took about 2 minutes per epoch. I spent about 1 day to train 777 epochs.
 
 ```bash
-$ svc train -t
+svc train -t
 ```
 
 You can monitor the training process in TensorBoard, it's running on port 6006 by default. [http://localhost:6006/](http://localhost:6006/)
@@ -64,16 +64,14 @@ I used `Demucs` model to split vocals and instruments, then used `VR Architectur
 
 Now we have the model and raw vocals, we can convert raw vocals to model voice.
 
-
 ```bash
-$ svc infer source.wav
+svc infer source.wav
 ```
 
 Or using GUI to tune more parameters:
 
-
 ```bash
-$ svcg
+svcg
 ```
 
 ### 7. Post process
@@ -106,7 +104,6 @@ $ python inference.py --driven_audio <audio.wav> \
 ```
 
 Repeat that for each audio file and portrait photo.
-
 
 ## Merge audio and video
 

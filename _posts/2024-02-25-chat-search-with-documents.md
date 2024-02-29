@@ -38,7 +38,7 @@ instead of traditional tokenization and inverted index.
 Query is the process to find the most relevant documents for a given query.
 It will use the same embedding model to generate query embeddings,
 then use knn to find the most relevant documents.
-Additionally, instead of just returning documents, 
+Additionally, instead of just returning documents,
 we can combine retrieved documents and query to generate a final response via a LLM (Large Language Model).
 
 ## Tech Stack
@@ -46,7 +46,7 @@ we can combine retrieved documents and query to generate a final response via a 
 * LangChain
 * LangServe
 * Embedding Model
-* Chat Model 
+* Chat Model
 * Redis as vector store
 
 ### LangChain

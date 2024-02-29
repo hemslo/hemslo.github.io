@@ -4,7 +4,7 @@ title: "Implement racket/trace Like Observability Using eBPF"
 permalink: /implement-racket-trace-like-observability-using-ebpf/
 ---
 
-### Background
+## Background
 
 I'm reading the new JavaScript version of SICP, there is an exercise about
 drawing the tree recursion process, [Exercise 1.14](https://sourceacademy.org/sicpjs/1.2.3#ex-1.14).
@@ -27,7 +27,7 @@ It's also available in Racket, can be used like this:
 
 the output is:
 
-```
+```text
 >{fib 4}
 > {fib 3}
 > >{fib 2}
@@ -59,7 +59,7 @@ but hard for JIT/interpreted ones like Java or Node.js.
 In this post, I will show you how to implement a simple version of `trace`
 using eBPF, and visualize the call stack.
 
-### C
+## C
 
 Let's start with C, rewrite fib:
 
@@ -89,7 +89,8 @@ To implement `trace`, we need to know when a function is called and when it retu
 It can be done by using `uprobe` and `uretprobe` in
 [bpftrace](https://github.com/iovisor/bpftrace/blob/master/docs/reference_guide.md#4-uprobeuretprobe-dynamic-tracing-user-level-arguments).
 
-#### Find function symbol
+### Find function symbol in C
+
 First we need to verify the function symbol:
 
 ```shell
@@ -101,7 +102,8 @@ fib:     file format elf64-x86-64
 
 So `fib` is the one we want, as we expected.
 
-#### uprobe
+### uprobe in C
+
 Trace the function call parameters using `uprobe`:
 
 ```shell
@@ -112,12 +114,12 @@ Attaching 1 probe...
 In another terminal, run the program:
 
 ```shell
-$ ./fib
+./fib
 ```
 
 The output of `bpftrace` is
 
-```
+```text
 arg0: 4
 arg0: 3
 arg0: 2
@@ -129,7 +131,8 @@ arg0: 1
 arg0: 0
 ```
 
-#### uretprobe
+### uretprobe in C
+
 Trace the function return value using `uretprobe`:
 
 ```shell
@@ -140,12 +143,12 @@ Attaching 1 probe...
 In another terminal, run the program:
 
 ```shell
-$ ./fib
+./fib
 ```
 
 The output of `bpftrace` is
 
-```
+```text
 ret: 1
 ret: 0
 ret: 1
@@ -157,7 +160,7 @@ ret: 1
 ret: 3
 ```
 
-#### Combine uprobe and uretprobe
+### Combine uprobe and uretprobe
 
 Now we can combine them together:
 
@@ -186,7 +189,7 @@ fib(0)
 
 It's almost what we want, leave pretty visualization later.
 
-### Go
+## Go
 
 Can we do the same thing in Go?
 
@@ -214,10 +217,10 @@ func main() {
 ```
 
 ```shell
-$ go build fib.go
+go build fib.go
 ```
 
-#### Find function symbol
+### Find function symbol in Go
 
 ```shell
 $ objdump -t fib | grep fib
@@ -227,7 +230,7 @@ fib:     file format elf64-x86-64
 
 `main.fib` is what we want.
 
-#### uprobe
+### uprobe in Go
 
 ```shell
 $ sudo bpftrace -e 'uprobe:./fib:main.fib { printf("arg0: %d\n", arg0); }'
@@ -252,7 +255,7 @@ Oops, we got some unexpected output. Let's do further investigations.
 Disassemble the function:
 
 ```shell
-$ objdump -d fib > fib.asm
+objdump -d fib > fib.asm
 ```
 
 Here are some highlights:
@@ -260,19 +263,19 @@ Here are some highlights:
 ```asm
 000000000047f560 <main.fib>:
   ...
-  47f574:	48 83 f8 02          	cmp    $0x2,%rax
-  47f578:	7d 0a                	jge    47f584 <main.fib+0x24>
-  47f57a:	48 8b 6c 24 10       	mov    0x10(%rsp),%rbp
-  47f57f:	48 83 c4 18          	add    $0x18,%rsp
-  47f583:	c3                   	ret
+  47f574: 48 83 f8 02           cmp    $0x2,%rax
+  47f578: 7d 0a                 jge    47f584 <main.fib+0x24>
+  47f57a: 48 8b 6c 24 10        mov    0x10(%rsp),%rbp
+  47f57f: 48 83 c4 18           add    $0x18,%rsp
+  47f583: c3                    ret
   ...
 
 000000000047f5e0 <main.main>:
   ...
-  47f5f8:	b8 04 00 00 00       	mov    $0x4,%eax
-  47f5fd:	0f 1f 00             	nopl   (%rax)
-  47f600:	e8 5b ff ff ff       	call   47f560 <main.fib>
-  47f605:	48 89 44 24 38       	mov    %rax,0x38(%rsp)
+  47f5f8: b8 04 00 00 00        mov    $0x4,%eax
+  47f5fd: 0f 1f 00              nopl   (%rax)
+  47f600: e8 5b ff ff ff        call   47f560 <main.fib>
+  47f605: 48 89 44 24 38        mov    %rax,0x38(%rsp)
   ...
 ```
 
@@ -327,7 +330,6 @@ You may get different values on your machine, but the idea is the same.
 
 Now we solved mystery of `arg0: 8608`, how can we get the correct value?
 
-
 `bpftrace` support reading register values using
 [reg](https://github.com/iovisor/bpftrace/blob/master/docs/reference_guide.md#10-reg-registers).
 
@@ -381,7 +383,7 @@ Note this only works for Go 1.17+, because Go 1.17 switched to register-based AB
 For older Go versions, arguments are passed in stack, we need to use
 [sargN](https://github.com/iovisor/bpftrace/blob/master/docs/reference_guide.md#variables) to inspect them.
 
-### Trace-viewer
+## Trace-viewer
 
 There are many tools to visualize the stack trace, like [FlameGraph](https://github.com/brendangregg/FlameGraph).
 But there is one tool you probably already have, [Trace-viewer](https://www.chromium.org/developers/how-tos/trace-event-profiling-tool/).
@@ -408,12 +410,12 @@ uretprobe:./fib:fib {
 `bpftrace` also support json output, so we can get trace using:
 
 ```shell
-$ sudo ./fib.bt -f json > trace.jsonl
+sudo ./fib.bt -f json > trace.jsonl
 ```
 
 The file is like this:
 
-```
+```text
 {"type": "attached_probes", "data": {"probes": 2}}
 {"type": "printf", "data": ">,4,4292644,3837,3837\n"}
 {"type": "printf", "data": ">,3,4292918,3837,3837\n"}
@@ -453,14 +455,14 @@ if __name__ == '__main__':
 Then we can get the trace viewer format:
 
 ```shell
-$ ./bpftrace2trace.py < trace.jsonl > trace.json
+./bpftrace2trace.py < trace.jsonl > trace.json
 ```
 
 Load file in `chrome://tracing/`, we can see the trace:
 
 ![fib-trace-viewer](/assets/images/fib-trace-viewer.png)
 
-### Conclusion
+## Conclusion
 
 With the help of eBPF, we can trace function calls without modifying the source code.
 We only covered compiled languages here, and it depends on language specific ABI to work.

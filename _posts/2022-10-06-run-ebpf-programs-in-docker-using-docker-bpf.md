@@ -28,7 +28,7 @@ docker run -ti -v /usr/src:/usr/src:ro \
 However, the command will fail on Docker Desktop for Mac/Windows.
 The error may like this:
 
-```
+```text
 stdin:1:1-34: ERROR: tracepoint not found: raw_syscalls:sys_enter
 tracepoint:raw_syscalls:sys_enter { @[comm] = count(); }
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -36,10 +36,9 @@ tracepoint:raw_syscalls:sys_enter { @[comm] = count(); }
 
 Let's see how to fix it.
 
-### debugfs
+## debugfs
 
 `debugfs` is not mount by default on Docker Desktop for Mac/Windows. We can mount it using command
-
 
 ```shell
 mount -t debugfs debugfs /sys/kernel/debug
@@ -64,11 +63,11 @@ docker run -ti -v /usr/src:/usr/src:ro \
 
 Now the error message will be:
 
-```
+```text
 /bpftrace/include/clang_workarounds.h:14:10: fatal error: 'linux/types.h' file not found
 ```
 
-### Linux Kernel headers
+## Linux Kernel headers
 
 Some eBPF programs require Linux kernel headers to compile.
 It's usually available in `/usr/src/linux-headers-$(uname -r)`, which is generated when compiling the kernel with `CONFIG_IKHEADERS` enabled.
@@ -126,7 +125,7 @@ Attaching 1 probe...
 
 It works!
 
-### BTF
+## BTF
 
 BTF (BPF Type Format) provides type information for eBPF programs, so it can run without kernel headers. Linuxkit kernel does not enable BTF by default, if you are on Windows, you can switch to WSL 2 based engine, the latest kernel in WSL 2 has BTF enabled.
 
@@ -142,7 +141,7 @@ docker run -ti -v /usr/src:/usr/src:ro \
         bpftrace -e 'tracepoint:raw_syscalls:sys_enter { @[comm] = count(); }'
 ```
 
-### docker-bpf
+## docker-bpf
 
 To do all above steps, we need to run a lot of commands, and it's not easy to remember them,
 so I created [docker-bpf](https://github.com/hemslo/docker-bpf) to simplify the process.
