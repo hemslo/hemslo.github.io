@@ -2,6 +2,9 @@
 layout: page
 title: eBPF Summit 2023 CTF Writeup
 permalink: /ebpf-summit-2023-ctf-writeup/
+description: |
+  Summary of the eBPF Summit 2023 CTF where participants needed to identify
+  and kill a specific process reading /etc/passwd to reveal a flag.
 ---
 
 ## 0x00 Introduction

@@ -2,6 +2,9 @@
 layout: page
 title: "Generate custom images using Stable Diffusion with LoRA"
 permalink: /generate-custom-images-using-stable-diffusion-with-lora/
+description: |
+  Learn how to fine-tune Stable Diffusion with LoRA to create customized images,
+  such as transforming Ciri into a Cyberpunk 2077 style character.
 ---
 
 ## Introduction

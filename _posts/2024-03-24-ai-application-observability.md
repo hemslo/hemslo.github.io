@@ -2,6 +2,10 @@
 layout: page
 title: AI Application Observability
 permalink: /ai-application-observability/
+description: |
+  Explore essential observability tools for AI applications,
+  including OpenTelemetry for telemetry data, Pyroscope for continuous profiling,
+  and LangSmith for LLM observability.
 ---
 
 ## Introduction

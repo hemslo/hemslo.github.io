@@ -2,6 +2,9 @@
 layout: page
 title: How I built a smart baby monitor using (misusing) Google Cloud with almost no cost
 permalink: /how-i-built-a-smart-baby-monitor-using-misusing-google-cloud-with-almost-no-cost/
+description: |
+  Discover the process of building a baby needs detection model utilizing Nest Cam, Firebase,
+  and various web technologies, with a core focus on handling snapshots and model training.
 ---
 
 I was trying to find a baby needs detection model that I could use to detect different baby needs,

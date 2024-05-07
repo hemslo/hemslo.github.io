@@ -2,6 +2,9 @@
 layout: page
 title: "Make AI generated MV using so-vits-svc and SadTalker"
 permalink: /make-ai-generated-mv-using-so-vits-svc-and-sadtalker/
+description: |
+  Learn how to create your own AI-generated music video using tools like
+  so-vits-svc for voice conversion and SadTalker for animated photo matching.
 ---
 
 ## Introduction

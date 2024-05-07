@@ -2,6 +2,9 @@
 layout: page
 title: eBPF Summit 2022 CTF Challenge 2 Writeup
 permalink: /ebpf-summit-2022-ctf-challenge-2-writeup/
+description: |
+  Explore and solve eBPF Summit 2022 CTF Challenge 2 with Ubuntu 22.04 VM,
+  using kubectl, bpftool, and analysis of BPF programs.
 ---
 
 ## 0x00 Introduction

@@ -2,6 +2,9 @@
 layout: page
 title: Run eBPF Programs in Docker using docker-bpf
 permalink: /run-ebpf-programs-in-docker-using-docker-bpf/
+description: |
+  Run eBPF programs in Docker containers with the new tool docker-bpf,
+  including fixes for common issues.
 ---
 
 eBPF programs are very powerful.

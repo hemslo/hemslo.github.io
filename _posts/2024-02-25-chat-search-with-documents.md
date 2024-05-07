@@ -2,6 +2,9 @@
 layout: page
 title: Chat Search with Documents
 permalink: /chat-search-with-documents/
+description: |
+  Learn how to build a chatbot with document search capability using Generative AI and RAG,
+  complete with a tech stack and deployment guide.
 ---
 
 ## Introduction

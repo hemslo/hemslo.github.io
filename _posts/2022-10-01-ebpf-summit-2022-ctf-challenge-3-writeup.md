@@ -2,6 +2,9 @@
 layout: page
 title: eBPF Summit 2022 CTF Challenge 3 Writeup
 permalink: /ebpf-summit-2022-ctf-challenge-3-writeup/
+description: |
+  A detailed writeup of the third challenge at the eBPF Summit 2022 CTF,
+  focusing on troubleshooting network issues using Kubernetes and Cilium.
 ---
 
 ## 0x00 Introduction

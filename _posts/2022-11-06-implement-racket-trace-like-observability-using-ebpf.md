@@ -2,6 +2,10 @@
 layout: page
 title: "Implement racket/trace Like Observability Using eBPF"
 permalink: /implement-racket-trace-like-observability-using-ebpf/
+description: |
+  A detailed guide on implementing a trace function using eBPF for observing
+  recursive calls in different programming languages, with examples in C and Go.
+  Includes steps to visualize the call stack using Chrome's Trace-viewer.
 ---
 
 ## Background

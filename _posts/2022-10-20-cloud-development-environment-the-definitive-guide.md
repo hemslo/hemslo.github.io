@@ -2,6 +2,10 @@
 layout: page
 title: "Cloud Development Environment: The Definitive Guide"
 permalink: /cloud-development-environment-the-definitive-guide/
+description: |
+  Learn how to set up a cloud development environment using tools like Vagrant,
+  Docker, VS Code Remote Development, JetBrains Remote Development, Development Containers,
+  and GitHub Codespaces.
 ---
 
 Cloud development environment is not a new concept.
