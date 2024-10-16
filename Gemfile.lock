@@ -272,7 +272,7 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  github-pages
+  github-pages (~> 232)
 
 BUNDLED WITH
    2.4.10
