@@ -89,7 +89,7 @@ It acts as a local relay: OBS pushes the stream to it, and any client on the net
 
 Install MediaMTX using winget:
 
-```bat
+```shell
 winget install -e --id bluenviron.mediamtx
 ```
 
@@ -97,8 +97,8 @@ Or download the binary manually from the [MediaMTX releases page](https://github
 
 Start MediaMTX:
 
-```bat
-mediamtx.exe
+```shell
+mediamtx
 ```
 
 You should see log output confirming the WebRTC listener started on port `8889`.
