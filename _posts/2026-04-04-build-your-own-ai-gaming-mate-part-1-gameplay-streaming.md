@@ -13,6 +13,7 @@ part: 1
 
 This post covers the video pipeline for the gaming mate setup.
 The goal is to get gameplay from OBS into a local endpoint that the rest of the system can consume reliably.
+For an overview of the full system, see [Part 0: Overview](/build-your-own-ai-gaming-mate-part-0-overview/).
 
 ## What This Part Does
 
