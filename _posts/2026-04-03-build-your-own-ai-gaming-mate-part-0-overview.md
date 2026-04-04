@@ -209,4 +209,6 @@ If it feels smart but slow or awkward, the rest of the stack does not matter yet
 
 ## Links
 
+- [Part 1: Gameplay Streaming](/build-your-own-ai-gaming-mate-part-1-gameplay-streaming/) — OBS, WebRTC, and MediaMTX
+
 I will update this section as each new post in the series goes live.
