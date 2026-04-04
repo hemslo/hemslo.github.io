@@ -7,7 +7,6 @@ description: |
   WebRTC, and MediaMTX.
 series: local-ai-gaming-mate
 part: 1
-published: false
 ---
 
 ## Introduction
@@ -53,47 +52,50 @@ This combination is generic enough to work with any game and stable enough to le
 ## Architecture for This Step
 
 ```text
-Game -> OBS -> WebRTC -> MediaMTX
+Game -> OBS -> WebRTC (WHIP) -> MediaMTX   [Windows machine]
+                                    |
+                               browser / agent  [macOS machine]
 ```
 
 ## Prerequisites
 
-- OBS Studio 30 or later (WebRTC output support is built in)
-- MediaMTX 1.9 or later
-- macOS, Linux, or Windows host with a GPU capable of capturing at your target resolution
-- The game, OBS, and MediaMTX all running on the same local machine or local network
-- Basic familiarity with OBS scenes and sources
-
-No cloud account or external port forwarding is required.
-Everything in this post stays on your local machine.
+- OBS Studio 30 or later (WebRTC/WHIP output support is built in) — Windows
+- MediaMTX 1.9 or later — Windows
+- The agent and browser — macOS
+- Both machines on the same local network
 
 ## Step 1: OBS Setup
 
-Create a new scene in OBS and add a Game Capture or Display Capture source depending on how your game runs.
+Create a new scene in OBS and add a Game Capture source for the game.
 Game Capture works best for games running in a window or full-screen exclusive mode on Windows.
-Display Capture is more portable and works well on macOS.
 
 Resolution and frame rate settings that work well for this pipeline:
 
 - Output resolution: 1920x1080
 - Frame rate: 30 fps
 
-In OBS Settings, go to Output and confirm the encoder is set to a hardware encoder if one is available (e.g., Apple VT H264 on macOS, NVENC on NVIDIA hardware).
+In OBS Settings, go to Output and confirm the encoder is set to a hardware encoder if one is available (e.g., NVENC on NVIDIA hardware).
 Software encoding at 1080p 30fps is fine for this step, but hardware encoding reduces the CPU load on the same machine.
 
 ## Step 2: MediaMTX Setup
 
-Download the MediaMTX binary for your platform from the [MediaMTX releases page](https://github.com/bluenviron/mediamtx/releases).
+Download the MediaMTX binary for Windows from the [MediaMTX releases page](https://github.com/bluenviron/mediamtx/releases).
+The release archive includes a default `mediamtx.yml` config file.
 
-The default configuration accepts streams on any path, so no custom config file is required to get started.
-Start MediaMTX with the default config:
+The default config does not enable the WebRTC/WHIP listener.
+Open `mediamtx.yml` and confirm (or add) the following section to enable it:
 
-```bash
-./mediamtx
+```yaml
+webrtcAddress: :8889
 ```
 
-You should see log output confirming the server started.
-The WebRTC endpoint listens on port `8889` by default.
+Then start MediaMTX with the config:
+
+```bat
+mediamtx.exe mediamtx.yml
+```
+
+You should see log output confirming the WebRTC listener started on port `8889`.
 
 ## Step 3: WebRTC Publish Flow
 
@@ -115,17 +117,12 @@ WHIP support was added in OBS 30.0.0.
 
 ## Verification
 
-Once OBS is streaming and MediaMTX is running, open a browser on any machine on the same network and go to:
+Once OBS is streaming and MediaMTX is running, open a browser on the macOS machine and go to:
 
 ```
 http://IP:8889/mystream
 ```
 
-Replace `IP` with the IP address of the machine running MediaMTX (or `localhost` if viewing on the same machine).
+Replace `IP` with the Windows machine's local IP address.
 MediaMTX serves a built-in WebRTC player at that URL.
 If you can see your gameplay in the browser, the full publish-to-read path is working.
-
-## Notes for the Final Draft
-
-Keep this post practical.
-Readers should be able to stop here and still have a working local gameplay stream.
