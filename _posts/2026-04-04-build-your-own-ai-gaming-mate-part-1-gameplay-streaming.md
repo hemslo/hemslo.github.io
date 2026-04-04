@@ -62,44 +62,25 @@ Display Capture is more portable and works well on macOS.
 
 Resolution and frame rate settings that work well for this pipeline:
 
-- Output resolution: 1280x720
+- Output resolution: 1920x1080
 - Frame rate: 30 fps
 
-Higher resolutions and frame rates are possible, but downstream steps in the pipeline will resize frames before sending them to the model anyway.
-Starting at 720p keeps encoding overhead low and makes it easier to spot frame drop issues early.
-
 In OBS Settings, go to Output and confirm the encoder is set to a hardware encoder if one is available (e.g., Apple VT H264 on macOS, NVENC on NVIDIA hardware).
-Software encoding at 720p 30fps is fine for this step, but hardware encoding reduces the CPU load on the same machine.
+Software encoding at 1080p 30fps is fine for this step, but hardware encoding reduces the CPU load on the same machine.
 
 ## Step 2: MediaMTX Setup
 
 Download the MediaMTX binary for your platform from the [MediaMTX releases page](https://github.com/bluenviron/mediamtx/releases).
 
-Create a `mediamtx.yml` config file with the following minimum settings:
-
-```yaml
-paths:
-  gameplay:
-    source: publisher
-```
-
-This defines a single path called `gameplay` that accepts a published stream and holds it for readers.
-The default ports MediaMTX uses are:
-
-- `8554` for RTSP
-- `8889` for WebRTC (HTTP-based signaling)
-- `8888` for HLS
-
-For this pipeline, only the WebRTC port matters.
-You can disable the others if you want a smaller surface, but leaving defaults in place is fine for local use.
-
-Start MediaMTX:
+The default configuration accepts streams on any path, so no custom config file is required to get started.
+Start MediaMTX with the default config:
 
 ```bash
-./mediamtx mediamtx.yml
+./mediamtx
 ```
 
-You should see log output confirming the server started and the `gameplay` path is ready.
+You should see log output confirming the server started.
+The WebRTC endpoint listens on port `8889` by default.
 
 ## Step 3: WebRTC Publish Flow
 
@@ -107,12 +88,14 @@ In OBS, go to Settings → Stream.
 
 Set the following:
 
-- Service: **WHIP**
+- Service: `WHIP`
 - Server: `http://localhost:8889/gameplay/whip`
-- Bearer Token: leave blank (not required for local MediaMTX without auth)
 
-Click Apply and then start the stream in OBS.
-OBS will negotiate a WebRTC session with MediaMTX and begin pushing frames.
+Save the configuration and click `Start streaming`.
+
+OBS will negotiate a WebRTC session with MediaMTX and the stream will be available on path `/gameplay`.
+
+For more details, see the [MediaMTX WebRTC clients documentation](https://mediamtx.org/docs/publish/webrtc-clients) and the [OBS Studio guide](https://mediamtx.org/docs/publish/obs-studio).
 
 If OBS does not show a WHIP option in your version, update to OBS 30 or later.
 WHIP support was added in OBS 30.0.0.
@@ -127,48 +110,6 @@ http://localhost:8889/gameplay
 
 MediaMTX serves a built-in WebRTC player at that URL.
 If you can see your gameplay in the browser, the full publish-to-read path is working.
-
-For a non-browser check, you can use `ffprobe` to inspect the stream:
-
-```bash
-ffprobe -v quiet -print_format json -show_streams http://localhost:8888/gameplay/index.m3u8
-```
-
-This hits the HLS endpoint instead of WebRTC, but it confirms MediaMTX is receiving and serving the stream.
-A successful response will include stream metadata with the video codec, resolution, and frame rate you configured in OBS.
-
-## Failure Modes
-
-**Stream not connecting**
-
-Check that MediaMTX is running and the `gameplay` path is defined in your config.
-OBS will silently fail to connect if the WHIP URL is wrong or MediaMTX is not listening.
-Look at the MediaMTX log for incoming connection attempts.
-
-**Wrong codec or browser compatibility issue**
-
-MediaMTX and OBS default to H.264 for WebRTC, which has the widest browser support.
-If you see a blank player in the browser, check whether OBS is encoding with H.265 or AV1.
-Force H.264 in OBS encoder settings if you run into codec mismatches.
-
-**High latency**
-
-WebRTC should give you sub-second latency on a local connection.
-If you are seeing delays of several seconds, check whether OBS is falling back to an HLS or RTMP path.
-Confirm the stream is going through the WHIP URL, not a different output plugin.
-
-**Resolution too high for the rest of the pipeline**
-
-Downstream, the agent resizes frames before passing them to the model.
-If you capture at 4K and the agent is slow, reduce the OBS output resolution to 1280x720.
-The model does not need the extra pixels, and the lower resolution will reduce both encode and decode overhead.
-
-**Session drops after long play sessions**
-
-MediaMTX keeps the session alive as long as OBS is publishing.
-If you see drops after 30 to 60 minutes, check system sleep settings and network interface power management.
-On macOS, App Nap can throttle background processes.
-Keep OBS in the foreground or disable App Nap for OBS using `defaults write -g NSAppSleepDisabled -bool YES`.
 
 ## Notes for the Final Draft
 
