@@ -82,20 +82,16 @@ Software encoding at 1080p 30fps is fine for this step, but hardware encoding re
 Download the MediaMTX binary for Windows from the [MediaMTX releases page](https://github.com/bluenviron/mediamtx/releases).
 The release archive includes a default `mediamtx.yml` config file.
 
-The default config does not enable the WebRTC/WHIP listener.
-Open `mediamtx.yml` and confirm (or add) the following section to enable it:
-
-```yaml
-webrtcAddress: :8889
-```
-
-Then start MediaMTX with the config:
+Start MediaMTX:
 
 ```bat
-mediamtx.exe mediamtx.yml
+mediamtx.exe
 ```
 
 You should see log output confirming the WebRTC listener started on port `8889`.
+
+Start MediaMTX before OBS.
+The stream path is created dynamically when OBS begins publishing, so there is nothing to pre-configure.
 
 ## Step 3: WebRTC Publish Flow
 
@@ -117,7 +113,8 @@ WHIP support was added in OBS 30.0.0.
 
 ## Verification
 
-Once OBS is streaming and MediaMTX is running, open a browser on the macOS machine and go to:
+Start MediaMTX first, then start OBS streaming.
+Once OBS is publishing, open a browser on the macOS machine and go to:
 
 ```
 http://IP:8889/mystream
@@ -125,4 +122,5 @@ http://IP:8889/mystream
 
 Replace `IP` with the Windows machine's local IP address.
 MediaMTX serves a built-in WebRTC player at that URL.
+The page will not show a stream until OBS has started publishing — opening it before OBS starts streaming will show nothing.
 If you can see your gameplay in the browser, the full publish-to-read path is working.
