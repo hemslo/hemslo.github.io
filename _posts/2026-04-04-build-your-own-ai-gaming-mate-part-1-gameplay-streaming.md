@@ -24,18 +24,31 @@ At the end of this post, you should have:
 3. MediaMTX receiving the stream locally
 4. A repeatable way to verify that the stream is healthy
 
-## Why This Layer Exists
+## What I Tried First
 
-The most obvious alternative to this stack is direct screen capture inside the agent process itself.
-That approach works for one-off demos but breaks down in practice.
-Screen capture libraries vary by platform, introduce their own latency, and tie the capture lifecycle to the agent process.
-If the agent crashes or restarts, you lose the capture context.
+Before settling on OBS + MediaMTX, I went through a couple of simpler options.
 
-OBS separates the capture concern completely.
-It handles the platform-specific work, lets me tune the output independently, and keeps running even when I restart or redeploy the agent.
-WebRTC over MediaMTX gives me a local HTTP endpoint that any process can attach to without caring about how the capture is done.
-That separation is the whole point.
-If something feels wrong with the image quality or the frame rate, I can fix it in OBS without touching the agent code.
+**Google Meet screen share**
+
+The first attempt was just sharing the game screen in a Google Meet call.
+It requires zero setup and works from any browser.
+The problem is that latency and quality are both at the mercy of Google's servers.
+Even on a local network the stream routes through the cloud, which adds unpredictable delay and makes it unsuitable for anything that needs to react to what is happening on screen.
+
+**Screego**
+
+[Screego](https://screego.net) is a self-hosted WebRTC screen-sharing server.
+Both the game machine and the macOS machine connect through a browser, no extra software required.
+This was promising until I noticed the resource usage.
+Screego publishes at display resolution, and my display is 4K.
+Encoding and decoding a 4K WebRTC stream on the same machine running the game was too expensive and caused frame drops in both the game and the agent.
+
+**OBS + MediaMTX**
+
+OBS lets me set an explicit output resolution independent of the display.
+Publishing at 1080p 30fps uses a fraction of the resources that a raw 4K screen capture would.
+MediaMTX acts as a local relay so any process on the same machine can read the stream without going through a browser at all.
+This combination is generic enough to work with any game and stable enough to leave running in the background.
 
 ## Architecture for This Step
 
@@ -89,25 +102,26 @@ In OBS, go to Settings → Stream.
 Set the following:
 
 - Service: `WHIP`
-- Server: `http://localhost:8889/gameplay/whip`
+- Server: `http://localhost:8889/mystream/whip`
 
 Save the configuration and click `Start streaming`.
 
-OBS will negotiate a WebRTC session with MediaMTX and the stream will be available on path `/gameplay`.
+OBS will negotiate a WebRTC session with MediaMTX and the stream will be available on path `/mystream`.
 
-For more details, see the [MediaMTX WebRTC clients documentation](https://mediamtx.org/docs/publish/webrtc-clients) and the [OBS Studio guide](https://mediamtx.org/docs/publish/obs-studio).
+For more details, see the [MediaMTX WebRTC clients documentation](https://mediamtx.org/docs/publish/webrtc-clients) and the [OBS Studio and WebRTC guide](https://mediamtx.org/docs/publish/obs-studio#obs-studio-and-webrtc).
 
 If OBS does not show a WHIP option in your version, update to OBS 30 or later.
 WHIP support was added in OBS 30.0.0.
 
 ## Verification
 
-Once OBS is streaming and MediaMTX is running, open a browser and go to:
+Once OBS is streaming and MediaMTX is running, open a browser on any machine on the same network and go to:
 
 ```
-http://localhost:8889/gameplay
+http://IP:8889/mystream
 ```
 
+Replace `IP` with the IP address of the machine running MediaMTX (or `localhost` if viewing on the same machine).
 MediaMTX serves a built-in WebRTC player at that URL.
 If you can see your gameplay in the browser, the full publish-to-read path is working.
 
