@@ -66,6 +66,10 @@ Game -> OBS -> WebRTC (WHIP) -> MediaMTX   [Windows machine]
 
 ## Step 1: OBS Setup
 
+[OBS Studio](https://obsproject.com) is a free, open-source screen recording and live streaming application.
+It is widely used by streamers but works just as well as a local capture tool.
+OBS gives you control over output resolution and encoder independently of your display, which is exactly what this pipeline needs.
+
 Create a new scene in OBS and add a Game Capture source for the game.
 Game Capture works best for games running in a window or full-screen exclusive mode on Windows.
 
@@ -79,8 +83,16 @@ Software encoding at 1080p 30fps is fine for this step, but hardware encoding re
 
 ## Step 2: MediaMTX Setup
 
-Download the MediaMTX binary for Windows from the [MediaMTX releases page](https://github.com/bluenviron/mediamtx/releases).
-The release archive includes a default `mediamtx.yml` config file.
+[MediaMTX](https://mediamtx.org) is a lightweight, zero-dependency media server that supports WebRTC, RTSP, HLS, and more.
+It acts as a local relay: OBS pushes the stream to it, and any client on the network can pull it back out.
+
+Install MediaMTX using winget:
+
+```bat
+winget install -e --id bluenviron.mediamtx
+```
+
+Or download the binary manually from the [MediaMTX releases page](https://github.com/bluenviron/mediamtx/releases).
 
 Start MediaMTX:
 
@@ -124,3 +136,6 @@ Replace `IP` with the Windows machine's local IP address.
 MediaMTX serves a built-in WebRTC player at that URL.
 The page will not show a stream until OBS has started publishing — opening it before OBS starts streaming will show nothing.
 If you can see your gameplay in the browser, the full publish-to-read path is working.
+
+**Network access note:** if the macOS machine cannot reach the stream, the Windows firewall may be blocking port `8889`.
+Add an inbound rule to allow TCP/UDP on that port, or skip firewall changes entirely by using [Tailscale](https://tailscale.com) — replace `IP` with the Windows machine's Tailscale IP and the traffic will tunnel through the VPN without touching firewall rules.
