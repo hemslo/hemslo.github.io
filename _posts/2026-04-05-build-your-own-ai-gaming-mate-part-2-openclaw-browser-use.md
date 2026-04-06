@@ -5,8 +5,7 @@ permalink: /build-your-own-ai-gaming-mate-part-2-openclaw-browser-use/
 description: |
   Connect OpenClaw to a Chrome session so it can observe the local gameplay stream
   delivered by MediaMTX.
-series: local-ai-gaming-mate
-part: 2
+category: build-your-own-ai-gaming-mate
 ---
 
 ## Introduction

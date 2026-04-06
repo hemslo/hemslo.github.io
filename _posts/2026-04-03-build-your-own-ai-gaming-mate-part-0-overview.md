@@ -5,8 +5,7 @@ permalink: /build-your-own-ai-gaming-mate-part-0-overview/
 description: |
   An overview of a local AI gaming mate built with OBS, MediaMTX, OpenClaw,
   Discord, and flexible voice options, including a customizable local TTS setup.
-series: local-ai-gaming-mate
-part: 0
+category: build-your-own-ai-gaming-mate
 ---
 
 ## Introduction

@@ -5,8 +5,7 @@ permalink: /build-your-own-ai-gaming-mate-part-1-gameplay-streaming/
 description: |
   Set up the gameplay video pipeline for a local AI gaming mate using OBS,
   WebRTC, and MediaMTX.
-series: local-ai-gaming-mate
-part: 1
+category: build-your-own-ai-gaming-mate
 ---
 
 ## Introduction
@@ -140,3 +139,10 @@ If you can see your gameplay in the browser, the full publish-to-read path is wo
 
 **Network access note:** if the macOS machine cannot reach the stream, the Windows firewall may be blocking port `8889`.
 Add an inbound rule to allow TCP/UDP on that port, or skip firewall changes entirely by using [Tailscale](https://tailscale.com) — replace `IP` with the Windows machine's Tailscale IP and the traffic will tunnel through the VPN without touching firewall rules.
+
+## Links
+
+- [Part 0: Overview](/build-your-own-ai-gaming-mate-part-0-overview/)
+- [MediaMTX WebRTC clients documentation](https://mediamtx.org/docs/publish/webrtc-clients)
+- [OBS Studio and WebRTC guide](https://mediamtx.org/docs/publish/obs-studio#obs-studio-and-webrtc)
+- [Part 2: OpenClaw Browser Use](/build-your-own-ai-gaming-mate-part-2-openclaw-browser-use/)
