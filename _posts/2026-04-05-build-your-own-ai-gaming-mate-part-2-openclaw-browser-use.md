@@ -169,37 +169,20 @@ For the `user` profile, open the stream tab in Chrome again and accept the DevTo
 Then confirm with `openclaw browser --browser-profile user tabs`.
 There is no automatic reconnect in either case.
 
-## Failure Modes
+## End-to-End Verification
 
-**Tab does not appear in `openclaw browser tabs`**
+Once OBS is publishing and the Gateway is running, you can hand the entire setup to OpenClaw with a single prompt:
 
-For the `openclaw` profile: confirm the Gateway is running and that you ran the `open` command to start the managed browser.
+> open `http://IP:8889/mystream` in my chrome and watch my game stream
 
-For the `user` profile: confirm Chrome is running, that you navigated to the stream URL, and that you accepted the Chrome DevTools MCP connection dialog.
+OpenClaw will pick a profile, open the URL, and confirm when it can see the stream.
 
-**Attached to the wrong tab**
+To verify at any point during a session, just ask:
 
-The `openclaw browser tabs` command shows exactly which tabs are visible.
-If the URL is not the MediaMTX stream page, close the wrong tab or navigate the correct tab to the stream URL and retry.
+> can you see my game stream in chrome?
 
-**Stream visible in browser but not useful to the agent**
-
-The agent observes the rendered frame, not the raw video stream.
-If the stream is paused, buffering, or showing a spinner, the agent sees that frame instead of gameplay.
-Keep the stream in an unpaused, healthy state before starting a session.
-The MediaMTX player page will not autoplay if there is no active OBS publish, so always start OBS before opening the agent session.
-
-**Reconnects after browser restart**
-
-There is no automatic reconnect.
-For the `openclaw` profile, run the `open` command again.
-For the `user` profile, open the stream tab, accept the DevTools MCP prompt, and confirm with `openclaw browser --browser-profile user tabs`.
-
-**Browser UI getting in the way**
-
-The MediaMTX player page is a full-page video element with minimal UI.
-Browser chrome (address bar, bookmarks, tab bar) does not overlap the video area in a maximized or fullscreen window.
-If the agent starts navigating away from the tab for any reason, reload the stream URL and re-verify the tab list.
+OpenClaw should respond with a screenshot of the current tab and a short description of what is on screen — for example, the game title, the current scene, or the match state.
+If it cannot see anything useful (spinner, blank frame, wrong tab), its reply will say so and you can reload the tab or restart OBS before trying again.
 
 ## Links
 
