@@ -27,11 +27,11 @@ At the end of this post, OpenClaw should be able to:
 ## Why Chrome Is in the Loop
 
 After MediaMTX receives the stream from OBS, something has to decode and render the video so the agent can observe it.
-The cleanest option for OpenClaw is a browser tab: Chrome handles WebRTC playback natively, and OpenClaw has a first-class extension that can attach to existing tabs without spinning up a separate headless browser.
+The cleanest option for OpenClaw is a browser tab: Chrome handles WebRTC playback natively, and OpenClaw can control a Chrome session directly without any custom plumbing.
 
 The alternative would be to point OpenClaw at the MediaMTX WebRTC endpoint directly and have the agent consume raw video frames.
 That path is more complex to set up and harder to debug.
-A Chrome tab gives me a visible surface I can inspect myself, and the OpenClaw extension gives the agent access to the same surface without any custom plumbing.
+A Chrome tab gives me a visible surface I can inspect myself, and OpenClaw's browser tool gives the agent access to the same surface.
 
 The other reason is session persistence.
 Chrome tabs survive a MediaMTX restart better than most custom clients.
@@ -39,21 +39,80 @@ If I restart the stream, I can reload the tab and the agent picks up again witho
 
 ## Architecture for This Step
 
+OpenClaw supports two ways to connect to Chrome, described in the sections below.
+
+**Option A — `openclaw` profile (fresh instance):**
+
 ```text
-MediaMTX -> Chrome tab -> OpenClaw Chrome extension -> OpenClaw Gateway -> agent
+MediaMTX -> OpenClaw-managed Chrome tab -> OpenClaw -> agent
 ```
 
-OpenClaw does not read from MediaMTX directly.
-It observes the tab through the Chrome Debugger API, which the extension relays to the OpenClaw Gateway running locally on macOS.
+OpenClaw launches and fully manages its own Chrome instance.
+
+**Option B — `user` profile (attach to existing session):**
+
+```text
+MediaMTX -> your Chrome tab -> Chrome DevTools MCP -> OpenClaw -> agent
+```
+
+OpenClaw attaches to the Chrome session you already have open via Chrome DevTools MCP.
+
+In both cases OpenClaw does not read from MediaMTX directly.
+It observes the browser tab that is playing the stream.
 
 ## Prerequisites
 
 - Chrome installed on macOS
 - OpenClaw installed and the Gateway running locally
-- `OPENCLAW_GATEWAY_TOKEN` set (or `gateway.auth.token` in the OpenClaw config)
 - The MediaMTX stream from Part 1 is reachable from the macOS machine at `http://IP:8889/mystream`
 
-## Step 1: Open the Stream in Chrome
+For the `user` profile only:
+
+- Chrome 144 or later (Chrome DevTools MCP support)
+
+## Option A: `openclaw` Profile (Fresh Chrome Instance)
+
+This is the simpler path.
+OpenClaw launches its own Chrome instance, isolated from your personal profile.
+No cookies, extensions, or login state from your daily browser carry over.
+That isolation is also the limitation: if you need an authenticated session you would use Option B instead.
+
+### Step 1: Open the Stream in the OpenClaw Browser
+
+Start the OpenClaw-managed browser and navigate to the stream URL:
+
+```shell
+openclaw browser --browser-profile openclaw open http://IP:8889/mystream
+```
+
+Replace `IP` with the Windows machine's local IP address or its Tailscale IP.
+OpenClaw launches a dedicated Chrome window, opens the page, and keeps the connection live.
+
+Verify that the tab is visible to the agent:
+
+```shell
+openclaw browser --browser-profile openclaw tabs
+```
+
+The output should list the stream tab with its title and URL.
+The stream will not autoplay until OBS is publishing, so start OBS first.
+
+### Step 2: Keep the Session Running
+
+The OpenClaw-managed browser stays open as long as the Gateway is running.
+If you need to restart, run the `open` command again.
+There is no persistent tab state between sessions.
+
+---
+
+## Option B: `user` Profile (Attach to Existing Chrome Session)
+
+This path lets OpenClaw observe the Chrome session you already have open,
+using [Chrome DevTools MCP](https://developer.chrome.com/blog/chrome-devtools-mcp-debug-your-browser-session).
+You keep your existing tabs, login state, and extensions.
+The tradeoff is that Chrome must be running and you need to approve the connection the first time.
+
+### Step 1: Open the Stream Tab in Chrome
 
 On the macOS machine, open Chrome and navigate to the MediaMTX WebRTC player URL:
 
@@ -62,83 +121,31 @@ http://IP:8889/mystream
 ```
 
 Replace `IP` with the Windows machine's local IP address or its Tailscale IP.
-The page will start playing the stream automatically once OBS is publishing.
-
 Keep this tab open and do not navigate away from it during a play session.
-The tab is the observation surface that OpenClaw will attach to.
 If you open a dedicated Chrome window just for the stream, it is easier to manage focus separately from your regular browsing.
 
-## Step 2: Install the OpenClaw Chrome Extension
+### Step 2: Enable Chrome DevTools MCP
 
-OpenClaw ships an extension that relays Chrome's debugger output to the local Gateway.
-Install the extension files with:
+Chrome DevTools MCP allows external tools to attach to your running Chrome session.
+In Chrome, go to `chrome://inspect/#remote-debugging` and follow the prompts to enable remote debugging.
 
-```shell
-openclaw browser extension install
-openclaw browser extension path
-```
+Chrome will show a confirmation dialog the first time OpenClaw tries to connect, and a banner will appear while the session is active.
+You need to approve the connection each time.
 
-The second command prints the directory you need to load in Chrome.
+### Step 3: Connect OpenClaw to Your Session
 
-In Chrome, go to `chrome://extensions` and enable **Developer mode** in the top-right corner.
-Click **Load unpacked** and select the directory printed by the previous command.
-Pin the extension icon to the toolbar so it is easy to click during a session.
-
-The first time you open the extension options, set two values:
-
-- **Port:** `18792` (the default relay port)
-- **Gateway token:** the same value as `OPENCLAW_GATEWAY_TOKEN` in your environment
-
-Save the options.
-The extension needs to match the local Gateway's token to relay debugger events.
-If the token does not match, the extension badge will show `!` instead of connecting.
-
-## Step 3: Create a Browser Profile
-
-Create a named profile so you can reference this Chrome session consistently from the agent:
+Use the `user` profile to list tabs in your current Chrome session:
 
 ```shell
-openclaw browser create-profile \
-  --name my-chrome \
-  --driver extension \
-  --cdp-url http://127.0.0.1:18792 \
-  --color "#00AA00"
+openclaw browser --browser-profile user tabs
 ```
 
-The `--driver extension` flag tells OpenClaw to use the Chrome extension relay rather than launching a managed browser of its own.
-The `--cdp-url` points at the relay port the extension listens on.
-The `--color` flag is cosmetic but useful when you have multiple profiles.
+The output should include the stream tab.
+If the tab does not appear, confirm that Chrome is running and that you accepted the DevTools MCP connection dialog.
 
-You only need to run this once.
-The profile is saved in your OpenClaw configuration.
-
-## Step 4: Attach to the Stream Tab
-
-Switch to the Chrome tab showing the MediaMTX stream.
-Click the OpenClaw extension icon in the toolbar.
-The badge should change to **ON** to confirm the tab is attached.
-
-To detach, click the icon again.
-Only attached tabs are visible to the agent.
-OpenClaw does not have blanket access to every open tab.
-
-Verify that the agent can see the tab:
-
-```shell
-openclaw browser --browser-profile my-chrome tabs
-```
-
-The output should list the attached tab with its title and URL.
-If the tab does not appear, check that the extension badge shows **ON** and that the Gateway is running.
+---
 
 ## Practical Issues
-
-**Tab focus on macOS**
-
-macOS routes keyboard events to the focused window.
-If OpenClaw needs to interact with the tab (for example, to trigger a reload), it may steal focus from the game window.
-For a pure observation setup where the agent only reads the stream, this is not a problem.
-If you add interaction later, you will want to think about how focus changes affect the game input.
 
 **Tab lifecycle**
 
@@ -147,53 +154,52 @@ If you close or navigate away from the tab, the agent loses its observation surf
 I keep a separate Chrome window with only the stream tab open, minimized but not closed.
 Minimized windows still render WebRTC video on macOS, unlike some other platforms.
 
+**Tab focus on macOS**
+
+macOS routes keyboard events to the focused window.
+If OpenClaw needs to interact with the tab (for example, to trigger a reload), it may steal focus from the game window.
+For a pure observation setup where the agent only reads the stream, this is not a problem.
+If you add interaction later, you will want to think about how focus changes affect the game input.
+
 **Reconnecting after a browser restart**
 
-If Chrome restarts, the extension reloads automatically, but you need to reattach the tab manually.
-Open the stream tab again, click the extension icon, and verify with `openclaw browser tabs`.
-There is no automatic reconnect on tab close or Chrome restart.
+For the `openclaw` profile, run `openclaw browser --browser-profile openclaw open http://IP:8889/mystream` again after a restart.
 
-**Extension reloads after OpenClaw upgrades**
-
-When you upgrade OpenClaw, rerun `openclaw browser extension install` and then reload the extension at `chrome://extensions`.
-The relay port and token settings are preserved, but the extension files themselves need to be updated.
-
-**macOS security prompts**
-
-On first use, macOS may prompt you to allow Chrome to access the local network.
-Allow it.
-The extension relay communicates over localhost (`127.0.0.1`), so the prompt is about loopback access, not external network exposure.
+For the `user` profile, open the stream tab in Chrome again and accept the DevTools MCP connection prompt.
+Then confirm with `openclaw browser --browser-profile user tabs`.
+There is no automatic reconnect in either case.
 
 ## Failure Modes
 
-**Extension badge shows `!` or `…`**
+**Tab does not appear in `openclaw browser tabs`**
 
-This means the extension cannot reach the Gateway or the token does not match.
-Check that the Gateway is running and that the token in the extension options matches `OPENCLAW_GATEWAY_TOKEN`.
+For the `openclaw` profile: confirm the Gateway is running and that you ran the `open` command to start the managed browser.
+
+For the `user` profile: confirm Chrome is running, that you navigated to the stream URL, and that you accepted the Chrome DevTools MCP connection dialog.
 
 **Attached to the wrong tab**
 
-The `openclaw browser tabs` command shows exactly which tab is attached.
-If the URL is not the MediaMTX stream page, click the extension icon to detach, switch to the correct tab, and attach again.
-Avoid keeping the extension attached to other tabs at the same time.
+The `openclaw browser tabs` command shows exactly which tabs are visible.
+If the URL is not the MediaMTX stream page, close the wrong tab or navigate the correct tab to the stream URL and retry.
 
 **Stream visible in browser but not useful to the agent**
 
 The agent observes the rendered frame, not the raw video stream.
 If the stream is paused, buffering, or showing a spinner, the agent sees that frame instead of gameplay.
 Keep the stream in an unpaused, healthy state before starting a session.
-The MediaMTX player page will not autostart if there is no active OBS publish, so always start OBS before opening the agent session.
+The MediaMTX player page will not autoplay if there is no active OBS publish, so always start OBS before opening the agent session.
 
 **Reconnects after browser restart**
 
 There is no automatic reconnect.
-After a Chrome restart, open the stream tab, click the extension icon to reattach, and confirm with `openclaw browser tabs`.
+For the `openclaw` profile, run the `open` command again.
+For the `user` profile, open the stream tab, accept the DevTools MCP prompt, and confirm with `openclaw browser --browser-profile user tabs`.
 
 **Browser UI getting in the way**
 
 The MediaMTX player page is a full-page video element with minimal UI.
 Browser chrome (address bar, bookmarks, tab bar) does not overlap the video area in a maximized or fullscreen window.
-If the agent starts navigating away from the tab for any reason, reload the stream URL and reattach.
+If the agent starts navigating away from the tab for any reason, reload the stream URL and re-verify the tab list.
 
 ## Links
 
