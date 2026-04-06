@@ -112,7 +112,7 @@ pip install mlx-audio
 - (Optional) A fork of mlx-audio with voice upload and voice-prompt caching for better performance — works like the vllm Qwen3-TTS serving example where the reference audio is uploaded once and reused across all requests instead of being re-encoded on every call
 
 ```shell
-pip install git+https://github.com/hemslo/mlx-audio.git
+pip install git+https://github.com/hemslo/mlx-audio.git@save-voice
 ```
 
 **Foot pedal:**
@@ -231,6 +231,33 @@ If you want voice cloning with better performance, the optional fork adds voice 
 This works the same way as the [vllm Qwen3-TTS serving example](https://docs.vllm.ai/projects/vllm-omni/en/latest/user_guide/examples/online_serving/qwen3_tts/):
 upload a reference audio file once, and every subsequent TTS request reuses the cached voice prompt instead of re-encoding it from scratch.
 The result is faster first-token latency for short replies.
+
+To test the fork locally, start the server the same way, then upload a reference audio file under a name of your choice and send a speech request using that name as the voice.
+
+Upload a reference audio file as a named voice (replace `reference.wav` with your actual file):
+
+```shell
+curl http://localhost:8000/v1/audio/voices \
+  -F "audio_sample=@reference.wav" \
+  -F "consent=positive" \
+  -F "name=ai"
+```
+
+The server stores the file and caches the voice prompt the first time it is used.
+Subsequent requests with `"voice": "ai"` skip re-encoding and return faster.
+
+Generate speech using the saved voice:
+
+```shell
+curl http://localhost:8000/v1/audio/speech \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-4bit",
+    "input": "Okay. Yeah. I resent you. I love you. I respect you. But you know what? You blew it! And thanks to you.",
+    "voice": "ai"
+  }' \
+  --output speech-en.mp3
+```
 
 Response latency for short replies on Apple Silicon M-series hardware is lower than most online providers.
 Long replies take more time to generate, which is one reason to keep agent replies short.
