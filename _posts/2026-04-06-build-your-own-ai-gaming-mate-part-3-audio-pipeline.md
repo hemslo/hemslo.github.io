@@ -31,12 +31,12 @@ At the end of this post, you should have:
 
 There are a few reasonable ways to do voice output:
 
-1. Built-in system TTS if you want the fastest path
+1. Discord's built-in TTS if you want the fastest path with zero configuration
 2. An online TTS provider if you want better voice quality with less local setup
-3. Qwen3-TTS plus `mlx-audio` if you want a self-hosted voice you can customize more deeply
+3. `mlx-audio` running Qwen3-TTS locally if you want a self-hosted voice on Apple Silicon
 
-The reason I keep the local Qwen3-TTS path is not that other options are unusable.
-It is that local hosting gives me more control over the exact voice I want to hear.
+The reason to run `mlx-audio` locally is not that the other options are unusable.
+It is that local hosting gives you lower latency and more control over the voice without any recurring cost or privacy tradeoff.
 
 ## Why This Setup
 
@@ -71,7 +71,7 @@ Audio input
 
 Audio output
   -> local agent text
-  -> Discord built-in TTS, online TTS, or Qwen3-TTS via mlx-audio fork
+  -> Discord built-in TTS, online TTS, or Qwen3-TTS via mlx-audio
   -> press pedal key 3 (mouse click via cliclick to play Discord TTS audio)
   -> spoken reply through 3.5mm cable into Windows line-in
 ```
@@ -102,13 +102,18 @@ Audio output
 **TTS (local Qwen3-TTS path):**
 
 - An Apple Silicon Mac with enough memory to run the model
-- A fork of mlx-audio that adds an OpenAI-compatible TTS API with voice cloning support
+- [mlx-audio](https://github.com/Blaizzy/mlx-audio) installed via pip — the upstream package already exposes an OpenAI-compatible TTS API
+
+```shell
+pip install mlx-audio
+```
+
+- Qwen3-TTS weights downloaded through mlx-audio
+- (Optional) A fork of mlx-audio with voice upload and voice-prompt caching for better performance — works like the vllm Qwen3-TTS serving example where the reference audio is uploaded once and reused across all requests instead of being re-encoded on every call
 
 ```shell
 pip install git+https://github.com/hemslo/mlx-audio.git
 ```
-
-- Qwen3-TTS weights downloaded through mlx-audio
 
 **Foot pedal:**
 
@@ -210,13 +215,8 @@ If the extra latency is acceptable and you do not want the local setup cost, an 
 
 ### Why Local Qwen3-TTS Is Worth the Extra Setup
 
-The upstream mlx-audio project runs Qwen3-TTS on Apple Silicon,
-but I use a fork that adds an OpenAI-compatible TTS API and voice cloning support.
-The voice cloning feature lets you capture a reference voice and reuse it consistently across all replies,
-which is the key difference from built-in or online TTS: the companion always sounds like the same character.
-
-The setup cost is real: you need to install the fork and download the weights.
-But once running, the voice is stable across sessions and does not depend on any external service.
+`mlx-audio` runs Qwen3-TTS on Apple Silicon and already exposes an OpenAI-compatible TTS API out of the box.
+That means you can point OpenClaw — or any other client that speaks the OpenAI TTS API — straight at the local server without any adapter code.
 
 Start the local TTS server:
 
@@ -224,12 +224,42 @@ Start the local TTS server:
 python -m mlx_audio.server
 ```
 
-The server exposes an OpenAI-compatible TTS endpoint at `http://localhost:8000`.
-Configure the agent to send reply text to that endpoint.
-To use voice cloning, record a short audio sample of the voice you want and pass it as the reference when making TTS requests.
+The server exposes an OpenAI-compatible TTS endpoint at `http://localhost:8000/v1`.
+Configure OpenClaw (or your agent) to send reply text to that endpoint.
+
+If you want voice cloning with better performance, the optional fork adds voice upload and caches the loaded voice prompt across requests.
+This works the same way as the [vllm Qwen3-TTS serving example](https://docs.vllm.ai/projects/vllm-omni/en/latest/user_guide/examples/online_serving/qwen3_tts/):
+upload a reference audio file once, and every subsequent TTS request reuses the cached voice prompt instead of re-encoding it from scratch.
+The result is faster first-token latency for short replies.
 
 Response latency for short replies on Apple Silicon M-series hardware is lower than most online providers.
 Long replies take more time to generate, which is one reason to keep agent replies short.
+
+### Configuring OpenClaw to Use the Local TTS Server
+
+OpenClaw's TTS settings live under `messages.tts` in `openclaw.json`.
+To point it at the local mlx-audio server, use the `openai` provider and set `baseUrl` to `http://localhost:8000/v1`:
+
+```json
+{
+  "messages": {
+    "tts": {
+      "auto": "always",
+      "provider": "openai",
+      "providers": {
+        "openai": {
+          "baseUrl": "http://localhost:8000/v1",
+          "model": "lucasnewman/f5-tts-mlx",
+          "voice": "alloy"
+        }
+      }
+    }
+  }
+}
+```
+
+Set `auto` to `"always"` to have every agent reply spoken automatically, or `"tagged"` to speak only replies that carry a specific tag.
+See the [OpenClaw TTS configuration reference](https://docs.openclaw.ai/gateway/configuration-reference#tts-text-to-speech) for the full list of options including per-provider voice settings and fallback providers.
 
 ### Response Length Limits
 
@@ -318,30 +348,11 @@ Keeping the Discord window at a consistent screen position makes the cursor plac
 Once the timing is tuned, the loop feels close to hands-free.
 The only perceptible pause is the time you spend speaking.
 
-## Reliability Notes
-
-A few things break more often than others, and it helps to know the pattern before it happens during a session.
-
-**Dictation focus problems** are the most common failure.
-If Discord is not the active app when you press the left pedal, dictation activates in the wrong window.
-Fix this by keeping a consistent window arrangement: Discord always in focus on the macOS machine.
-Since macOS runs only Discord, the browser, and OpenClaw — not the game — this is easier to maintain than it sounds.
-
-**mlx-audio server restarts** happen occasionally after macOS sleep or when the process is idle for a long time.
-Add a health check to the agent: before sending reply text to the local TTS endpoint, do a quick ping and restart the server if it is not responding.
-
-**Dictation vocabulary gaps** are a permanent background issue.
-For games with unusual terminology, dictation may mishear hero names, ability names, or place names.
-Say "ignore that" and repeat if needed, or dictate a phonetic approximation that the model still understands from context.
-
-**3.5mm cable audio quality** can degrade if the cable is cheap or the connection is loose.
-Use a short, shielded cable and seat both connectors fully.
-If you hear a hum or buzz, check for a ground loop — try a different port on the Windows PC or use a USB audio adapter on the macOS side.
-
 ## Links
 
 - [Part 0: Overview](/build-your-own-ai-gaming-mate-part-0-overview/)
 - [Part 1: Gameplay Streaming](/build-your-own-ai-gaming-mate-part-1-gameplay-streaming/)
 - [Part 2: OpenClaw Browser Use](/build-your-own-ai-gaming-mate-part-2-openclaw-browser-use/)
 - [mlx-audio on GitHub](https://github.com/Blaizzy/mlx-audio)
+- [OpenClaw TTS configuration reference](https://docs.openclaw.ai/gateway/configuration-reference#tts-text-to-speech)
 - [cliclick on GitHub](https://github.com/BlueM/cliclick)
