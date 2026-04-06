@@ -168,4 +168,5 @@ If it cannot see anything useful (spinner, blank frame, wrong tab), its reply wi
 
 - [Part 0: Overview](/build-your-own-ai-gaming-mate-part-0-overview/)
 - [Part 1: Gameplay Streaming](/build-your-own-ai-gaming-mate-part-1-gameplay-streaming/)
+- [Part 3: Audio Pipeline](/build-your-own-ai-gaming-mate-part-3-audio-pipeline/)
 - [OpenClaw Browser Tool documentation](https://docs.openclaw.ai/tools/browser)

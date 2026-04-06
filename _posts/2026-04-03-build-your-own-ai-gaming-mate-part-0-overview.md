@@ -210,5 +210,6 @@ If it feels smart but slow or awkward, the rest of the stack does not matter yet
 
 - [Part 1: Gameplay Streaming](/build-your-own-ai-gaming-mate-part-1-gameplay-streaming/) — OBS, WebRTC, and MediaMTX
 - [Part 2: OpenClaw Browser Use](/build-your-own-ai-gaming-mate-part-2-openclaw-browser-use/) — attaching OpenClaw to the Chrome session
+- [Part 3: Audio Pipeline](/build-your-own-ai-gaming-mate-part-3-audio-pipeline/) — voice input, TTS options, and hands-free controls
 
 I will update this section as each new post in the series goes live.
