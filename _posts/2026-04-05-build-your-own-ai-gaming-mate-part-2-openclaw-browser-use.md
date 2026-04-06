@@ -21,8 +21,13 @@ For the video pipeline setup, see [Part 1: Gameplay Streaming](/build-your-own-a
 At the end of this post, OpenClaw should be able to:
 
 1. Attach to the right Chrome tab showing the MediaMTX stream
-2. See the stream consistently across a full play session
-3. Reconnect cleanly when the browser restarts
+2. Take a screenshot of the stream on demand and describe what is on screen
+
+This setup gives OpenClaw access to the game stream — it does not watch every frame continuously.
+The agent only looks at the stream when you ask it to.
+If you ask "what choices should I pick?", OpenClaw takes a screenshot of the tab and replies based on what it sees.
+You can establish whatever convention works for you, such as saying "take a look" to trigger a screenshot.
+Continuous stream watching will be explored in a later post.
 
 ## Why Chrome Is in the Loop
 
@@ -144,30 +149,6 @@ The output should include the stream tab.
 If the tab does not appear, confirm that Chrome is running and that you accepted the DevTools MCP connection dialog.
 
 ---
-
-## Practical Issues
-
-**Tab lifecycle**
-
-The stream tab must stay open for the agent to observe it.
-If you close or navigate away from the tab, the agent loses its observation surface.
-I keep a separate Chrome window with only the stream tab open, minimized but not closed.
-Minimized windows still render WebRTC video on macOS, unlike some other platforms.
-
-**Tab focus on macOS**
-
-macOS routes keyboard events to the focused window.
-If OpenClaw needs to interact with the tab (for example, to trigger a reload), it may steal focus from the game window.
-For a pure observation setup where the agent only reads the stream, this is not a problem.
-If you add interaction later, you will want to think about how focus changes affect the game input.
-
-**Reconnecting after a browser restart**
-
-For the `openclaw` profile, run `openclaw browser --browser-profile openclaw open http://IP:8889/mystream` again after a restart.
-
-For the `user` profile, open the stream tab in Chrome again and accept the DevTools MCP connection prompt.
-Then confirm with `openclaw browser --browser-profile user tabs`.
-There is no automatic reconnect in either case.
 
 ## End-to-End Verification
 
