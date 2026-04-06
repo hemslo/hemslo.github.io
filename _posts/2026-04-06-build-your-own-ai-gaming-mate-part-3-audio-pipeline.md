@@ -221,10 +221,11 @@ That means you can point OpenClaw — or any other client that speaks the OpenAI
 Start the local TTS server:
 
 ```shell
-python -m mlx_audio.server
+python -m mlx_audio.server --host 0.0.0.0 --port 8000
 ```
 
-The server exposes an OpenAI-compatible TTS endpoint at `http://localhost:8000/v1`.
+Binding to `0.0.0.0` lets other machines on the same network reach the server, which is useful if OpenClaw runs on a different host than the Mac running mlx-audio.
+The server exposes an OpenAI-compatible TTS endpoint at `http://<host>:8000/v1`.
 Configure OpenClaw (or your agent) to send reply text to that endpoint.
 
 If you want voice cloning with better performance, the optional fork adds voice upload and caches the loaded voice prompt across requests.
@@ -271,22 +272,25 @@ To point it at the local mlx-audio server, use the `openai` provider and set `ba
 {
   "messages": {
     "tts": {
-      "auto": "always",
+      "auto": "tagged",
       "provider": "openai",
       "providers": {
         "openai": {
+          "apiKey": "ai",
           "baseUrl": "http://localhost:8000/v1",
-          "model": "lucasnewman/f5-tts-mlx",
-          "voice": "alloy"
+          "model": "mlx-community/Qwen3-TTS-12Hz-1.7B-Base-8bit",
+          "voice": "ai"
         }
-      }
+      },
+      "timeoutMs": 120000
     }
   }
 }
 ```
 
-Set `auto` to `"always"` to have every agent reply spoken automatically, or `"tagged"` to speak only replies that carry a specific tag.
-See the [OpenClaw TTS configuration reference](https://docs.openclaw.ai/gateway/configuration-reference#tts-text-to-speech) for the full list of options including per-provider voice settings and fallback providers.
+Set `auto` to `"tagged"` to speak only replies that carry a TTS tag — useful for limiting which responses are read aloud during gameplay.
+Use the `/voice` command in Discord to toggle TTS on or off on the fly without editing the config file.
+Set `auto` to `"always"` if you want every reply spoken automatically.
 
 ### Response Length Limits
 
@@ -322,58 +326,24 @@ No virtual audio devices or complex routing software are required.
 
 ## Foot Pedal Workflow
 
-The deck pedal turns a three-action keyboard sequence into three single presses with the left foot.
+The deck pedal turns a three-step keyboard sequence into three single presses with the left foot.
 
-### Which Key Each Pedal Triggers
-
-The mapping I use:
+### Pedal Mapping
 
 - **Left pedal:** Activate macOS dictation (double-click the left Command key)
 - **Middle pedal:** Send the Discord message (Return)
-- **Right pedal:** Play the Discord TTS audio reply (mouse left click via `cliclick c:.` wrapped in an Automator application)
+- **Right pedal:** Play the TTS audio reply (mouse left click via `cliclick c:.` wrapped in an Automator application)
 
-For the right pedal, the workflow is: hover the mouse over the Discord TTS play button in the reply, then press the right pedal.
-The Automator application runs `cliclick c:.` which clicks at the current mouse cursor position without moving it.
-This means you position the cursor over the play button once and then trigger the click with your foot.
+### Workflow
 
-The exact shortcut sequence depends on how you map the pedals in your driver software.
-Most programmable pedals support macro sequences or application bindings, so you can bind each pedal to a key or script.
+1. Press the left pedal to start dictation
+2. Speak your message
+3. Press the middle pedal to send it as a Discord message
+4. Wait for the agent reply to appear
+5. Hover the mouse over the Discord TTS play button, then press the right pedal to hear the reply
 
-The sequence is fast: dictate, press Return, wait for the reply to appear, hover over the play button, press the right pedal.
-Total hands-free time from speaking to hearing the reply is typically under three seconds for short replies.
-
-### Why Feet Are Better Than Hands for This Interaction
-
-During gameplay, hands are on the controller, keyboard, or mouse.
-Any input that requires lifting a hand breaks the game flow.
-
-The foot pedal removes that cost entirely.
-Left foot handles all three steps.
-Right foot stays on the floor or can be used for a second pedal set if needed.
-
-The mental overhead is also low.
-Three pedals in sequence for one complete interaction is easier to remember than reaching for a specific keyboard shortcut.
-After a few sessions it becomes automatic.
-
-### How the Pedal Changes Keyboard, Mouse, and Controller Play
-
-**Keyboard and mouse play:** The pedal is unobtrusive.
-The left foot is already idle in most keyboard-and-mouse setups.
-Activating the pedal does not interfere with WASD movement or mouse aiming.
-
-**Controller play:** Similarly low impact.
-Both thumbs stay on the controller during the entire dictation flow.
-The only interruption is the brief moment of speaking.
-
-**What still feels awkward:**
-The right pedal click requires the mouse to already be hovering over the Discord play button.
-If the cursor drifted during gameplay, you need to move it back before pressing the pedal.
-This is the one moment where a small hand movement is still needed.
-Keeping the Discord window at a consistent screen position makes the cursor placement faster over time.
-
-**What feels natural:**
-Once the timing is tuned, the loop feels close to hands-free.
-The only perceptible pause is the time you spend speaking.
+The right pedal runs `cliclick c:.`, which clicks at the current cursor position without moving it.
+Position the cursor over the play button once and use the pedal for every subsequent click.
 
 ## Links
 
