@@ -63,17 +63,17 @@ Together, they make the voice input path feel as fast and low-friction as typing
 
 ```text
 Audio input
-  -> press pedal key 1 (activate macOS dictation)
+  -> press pedal key 1 (double-click left Command to activate macOS dictation)
   -> speak
-  -> press pedal key 2 (stop dictation and copy text)
-  -> press pedal key 3 (paste into Discord and send)
+  -> press pedal key 2 (Return to send Discord message)
   -> Discord message
   -> local agent
 
 Audio output
   -> local agent text
-  -> system TTS, online TTS, or Qwen3-TTS via mlx-audio
-  -> spoken reply
+  -> Discord built-in TTS, online TTS, or Qwen3-TTS via mlx-audio fork
+  -> press pedal key 3 (mouse click via cliclick to play Discord TTS audio)
+  -> spoken reply through 3.5mm cable into Windows line-in
 ```
 
 ## Prerequisites
@@ -82,20 +82,17 @@ Audio output
 
 - macOS Ventura or later
 - Enable dictation in System Settings → Keyboard → Dictation
-- Set a shortcut that does not conflict with your games or applications
+- Set the shortcut to double-click the left Command key
 - Enable "Auto-punctuation" if you want cleaner transcriptions
 - Microphone access must be granted to the system
+- macOS handles only Discord, browser, and OpenClaw; the game itself runs on Windows
 
 **Discord:**
 
 - A Discord server and channel dedicated to the gaming mate session
 - The agent connected to that channel (covered in previous posts)
 - Discord desktop app, not the browser version — focus behavior is more predictable
-
-**TTS (built-in path):**
-
-- macOS `say` command is available out of the box
-- No additional setup required
+- Discord's built-in TTS enabled (the `/tts` prefix or a bot that sends TTS messages)
 
 **TTS (online provider path):**
 
@@ -105,10 +102,10 @@ Audio output
 **TTS (local Qwen3-TTS path):**
 
 - An Apple Silicon Mac with enough memory to run the model
-- [mlx-audio](https://github.com/Blaizzy/mlx-audio) installed via pip
+- A fork of mlx-audio that adds an OpenAI-compatible TTS API with voice cloning support
 
 ```shell
-pip install mlx-audio
+pip install git+https://github.com/hemslo/mlx-audio.git
 ```
 
 - Qwen3-TTS weights downloaded through mlx-audio
@@ -117,11 +114,16 @@ pip install mlx-audio
 
 - A 3-key USB deck pedal (any programmable HID pedal will work)
 - The pedal driver or macOS keyboard shortcut mapping tool
+- [cliclick](https://github.com/BlueM/cliclick) installed on macOS (used via an Automator application for the click action)
+
+```shell
+brew install cliclick
+```
 
 **Audio routing:**
 
-- If the game runs on a separate Windows machine, audio from the TTS plays on macOS, so there is no routing conflict
-- If both run on the same machine, use a virtual audio device or lower the game audio when a reply plays
+- A 3.5mm audio cable connecting the macOS headphone output to the Windows PC line-in port
+- Windows built-in volume mixer to balance game audio and the incoming macOS TTS audio
 
 ## Input Path
 
@@ -139,24 +141,20 @@ Second, you can scroll back through the session and see the full conversation, w
 
 ### Push-to-Activate Behavior
 
-macOS dictation works in two modes: a manual toggle or a double-press shortcut.
-I use the manual toggle bound to the foot pedal rather than the double-press.
-Double-press can fire accidentally during gameplay, especially with fast keyboard activity.
-A dedicated foot pedal key is harder to trigger by mistake.
+macOS dictation activates on a double-click of the left Command key.
+This is the shortcut I use because it does not conflict with any game shortcuts — the game is running on Windows, not macOS.
+macOS runs only Discord, the browser, and OpenClaw, so there is very little risk of a shortcut collision.
 
-The activation shortcut in macOS puts the dictation overlay in whatever app currently has focus.
+The activation shortcut puts the dictation overlay in whatever app currently has focus.
 If Discord is in the background, the shortcut will activate dictation in the wrong app.
-Solve this by bringing Discord to focus with a second shortcut before activating dictation,
-or by keeping Discord always visible in a corner of the screen.
+Solve this by keeping Discord always in focus on macOS, or by including a click on the Discord window as the first step of the pedal macro.
 
 ### Message Length
 
-Keep messages short.
-Dictation accuracy drops on long sentences, and the agent response is also longer when the question is longer.
-The sweet spot is one to three sentences: ask one thing, get one answer, continue playing.
-
-If you have a longer question, type it.
-The foot pedal workflow is optimized for quick back-and-forth, not for dictating paragraphs.
+Dictation handles both short and long inputs well.
+For quick remarks, one sentence is enough.
+For longer questions or complex situations, dictate the full message — there is no need to switch to typing.
+The foot pedal workflow supports whatever length you need.
 
 ### Recovering From Bad Transcription
 
@@ -184,23 +182,18 @@ The voice output side is where the tradeoffs between convenience and control are
 
 ### When Built-in TTS Is Enough
 
-macOS `say` is available immediately with no configuration.
-The voice quality is functional but not particularly characterful.
-For validating the end-to-end loop, it is more than sufficient.
+Discord has a built-in TTS feature.
+Any message sent with the `/tts` command, or sent by a bot that uses TTS output, will be read aloud by Discord using the system voice.
+This requires zero additional setup: it works out of the box once Discord TTS is enabled in user settings under Notifications.
 
-To make the agent use `say`, configure it to pipe reply text through the command:
+The voice quality is functional but generic.
+It sounds like a system utility rather than a specific character.
+For validating the end-to-end loop and getting a feel for the interaction rhythm, Discord TTS is more than sufficient.
 
-```shell
-say -v Samantha "your reply text here"
-```
-
-Choose a voice that is easy to understand at medium volume with game audio in the background.
-The built-in `Samantha` or `Tom` voices are clear at conversational pace.
-Avoid voices with heavy accent styling if your game audio is busy.
-
-The main limitation of built-in TTS is that the voice does not feel like a specific character.
-It sounds like a utility, not a companion.
-For longer play sessions, that gap becomes noticeable.
+The main limitation is control.
+You cannot change the voice style, pace, or persona through Discord TTS.
+For longer play sessions, the generic voice becomes noticeable.
+That is when moving to an online provider or local Qwen3-TTS makes sense.
 
 ### When an Online Provider Is a Better Tradeoff
 
@@ -217,25 +210,26 @@ If the extra latency is acceptable and you do not want the local setup cost, an 
 
 ### Why Local Qwen3-TTS Is Worth the Extra Setup
 
-`mlx-audio` wraps Qwen3-TTS so it runs on Apple Silicon without additional tools.
-The setup cost is real: you need to install the package and download the weights.
-But once running, the voice is customizable in ways that built-in and online TTS are not.
+The upstream mlx-audio project runs Qwen3-TTS on Apple Silicon,
+but I use a fork that adds an OpenAI-compatible TTS API and voice cloning support.
+The voice cloning feature lets you capture a reference voice and reuse it consistently across all replies,
+which is the key difference from built-in or online TTS: the companion always sounds like the same character.
 
-You can adjust the speaking style through prompt engineering.
-Qwen3-TTS accepts a description of the speaker's persona alongside the text,
-which means you can tune tone, pace, and affect to match the companion character you want.
+The setup cost is real: you need to install the fork and download the weights.
+But once running, the voice is stable across sessions and does not depend on any external service.
 
-Start `mlx-audio` as a local server:
+Start the local TTS server:
 
 ```shell
 python -m mlx_audio.server
 ```
 
 The server exposes an OpenAI-compatible TTS endpoint at `http://localhost:8000`.
-Configure the agent to send reply text to that endpoint instead of calling `say` directly.
+Configure the agent to send reply text to that endpoint.
+To use voice cloning, record a short audio sample of the voice you want and pass it as the reference when making TTS requests.
 
-Response latency is lower than an online provider for short replies on Apple Silicon M-series hardware.
-Long replies take longer, which is one reason to keep the agent replies short.
+Response latency for short replies on Apple Silicon M-series hardware is lower than most online providers.
+Long replies take more time to generate, which is one reason to keep agent replies short.
 
 ### Response Length Limits
 
@@ -258,29 +252,16 @@ Latency is lower, but sentence-level phrasing can sound fragmented if the TTS pr
 For a gaming companion, full-buffer playback is the better default.
 The generation time for short replies is small, and the improvement in delivery is worth the wait.
 
-### Interruptibility
-
-If you speak again while the agent is replying, kill the current TTS playback before starting the new one.
-The simplest implementation is to track the TTS process ID and kill it when a new message comes in.
-
-```shell
-kill $TTS_PID 2>/dev/null
-```
-
-Without interruption support, overlapping replies make the session feel unresponsive.
-This is one of the details that separates a usable companion from a demo.
-
 ### Audio Routing While the Game Is Already Producing Sound
 
-If TTS audio and game audio both play through the same output, replies can be drowned out during loud moments.
-Three options that work without complex routing:
+The macOS machine handles Discord, browser, and OpenClaw.
+The Windows machine runs the game.
+A 3.5mm audio cable connects the macOS headphone output to the Windows PC line-in port.
+This merges macOS audio — including Discord TTS and local TTS playback — with the game audio directly in hardware.
 
-1. Use headphones with separate left/right balance: game audio in one ear, TTS in the other
-2. Duck the game audio briefly when a TTS reply starts, then restore it
-3. Use a virtual audio device like [BlackHole](https://existential.audio/blackhole/) to keep TTS on a separate channel
-
-The simplest option that works is just to turn the game volume down slightly in the macOS volume mixer and trust that TTS at higher volume will be audible.
-Full audio routing is not worth the complexity unless the gaming experience is being streamed.
+Windows sees the macOS audio as a line-in source.
+Use the Windows built-in volume mixer to balance the two: raise or lower the line-in level relative to the game audio until the companion voice is comfortably audible over the game sound.
+No virtual audio devices or complex routing software are required.
 
 ## Foot Pedal Workflow
 
@@ -290,14 +271,19 @@ The deck pedal turns a three-action keyboard sequence into three single presses 
 
 The mapping I use:
 
-- **Left pedal:** Bring Discord to front and activate macOS dictation (`Cmd+Tab` to Discord, then dictation shortcut)
-- **Middle pedal:** Stop dictation and select all dictated text (`Esc` or dictation toggle, then `Cmd+A`)
-- **Right pedal:** Copy and send (`Cmd+C`, then paste into Discord message box, then `Return`)
+- **Left pedal:** Activate macOS dictation (double-click the left Command key)
+- **Middle pedal:** Send the Discord message (Return)
+- **Right pedal:** Play the Discord TTS audio reply (mouse left click via `cliclick c:.` wrapped in an Automator application)
+
+For the right pedal, the workflow is: hover the mouse over the Discord TTS play button in the reply, then press the right pedal.
+The Automator application runs `cliclick c:.` which clicks at the current mouse cursor position without moving it.
+This means you position the cursor over the play button once and then trigger the click with your foot.
 
 The exact shortcut sequence depends on how you map the pedals in your driver software.
-Most programmable pedals support macro sequences, so you can bind each pedal to a multi-step shortcut.
+Most programmable pedals support macro sequences or application bindings, so you can bind each pedal to a key or script.
 
-The sequence is not instant — there is about 200 ms of focus switching between steps — but it is fast enough that the total time from "press left pedal" to "message sent" is under two seconds for a short dictated sentence.
+The sequence is fast: dictate, press Return, wait for the reply to appear, hover over the play button, press the right pedal.
+Total hands-free time from speaking to hearing the reply is typically under three seconds for short replies.
 
 ### Why Feet Are Better Than Hands for This Interaction
 
@@ -323,9 +309,10 @@ Both thumbs stay on the controller during the entire dictation flow.
 The only interruption is the brief moment of speaking.
 
 **What still feels awkward:**
-The middle step — stopping dictation and selecting the text — sometimes takes an extra moment if macOS dictation is slow to finish processing.
-If the pedal fires the second step too quickly, the selected text may be incomplete.
-Adding a 300 ms delay after the first pedal press before triggering the second action fixes this.
+The right pedal click requires the mouse to already be hovering over the Discord play button.
+If the cursor drifted during gameplay, you need to move it back before pressing the pedal.
+This is the one moment where a small hand movement is still needed.
+Keeping the Discord window at a consistent screen position makes the cursor placement faster over time.
 
 **What feels natural:**
 Once the timing is tuned, the loop feels close to hands-free.
@@ -336,31 +323,20 @@ The only perceptible pause is the time you spend speaking.
 A few things break more often than others, and it helps to know the pattern before it happens during a session.
 
 **Dictation focus problems** are the most common failure.
-If Discord is not the active app when you press the pedal, dictation activates in the wrong window.
-Fix this by keeping a consistent window arrangement: Discord in a fixed position, game in the other window.
-If using a separate monitor, put Discord on the secondary monitor at all times.
-
-**TTS playback interruption** is the second most common issue.
-If a new reply arrives before the previous one has finished, you can end up with two overlapping audio streams.
-Ensure the agent sends a signal or PID file when TTS starts so the next reply can kill the previous process cleanly.
+If Discord is not the active app when you press the left pedal, dictation activates in the wrong window.
+Fix this by keeping a consistent window arrangement: Discord always in focus on the macOS machine.
+Since macOS runs only Discord, the browser, and OpenClaw — not the game — this is easier to maintain than it sounds.
 
 **mlx-audio server restarts** happen occasionally after macOS sleep or when the process is idle for a long time.
 Add a health check to the agent: before sending reply text to the local TTS endpoint, do a quick ping and restart the server if it is not responding.
 
 **Dictation vocabulary gaps** are a permanent background issue.
-For games with unusual terminology, keep a text fallback ready.
-The foot pedal workflow is for quick remarks; anything that requires precise terminology is faster to type.
+For games with unusual terminology, dictation may mishear hero names, ability names, or place names.
+Say "ignore that" and repeat if needed, or dictate a phonetic approximation that the model still understands from context.
 
-## Failure Modes
-
-1. **Dictation misses game-specific terms** — proper nouns, hero names, and ability names do not survive dictation well. Type these or add them to macOS's learned vocabulary through correction.
-2. **Discord focus problems** — if the dictation shortcut fires while Chrome or the game is in focus, dictation goes to the wrong window. Keep Discord visible and include a focus step in the pedal macro.
-3. **Built-in TTS is too generic for the companion style** — `say` works for validation but sounds like a utility tool. Upgrade to an online provider or local Qwen3-TTS if voice character matters.
-4. **Online TTS adds too much latency** — if the provider is slow or your connection is inconsistent, replies feel delayed. Switch to a lower-latency provider or move to local TTS.
-5. **Local TTS quality is good but setup cost is too high** — Qwen3-TTS with mlx-audio takes time to install and tune. If you are not sure the voice difference is worth it, start with built-in or online TTS and migrate later.
-6. **Audio routing glitches** — TTS and game audio overlapping is disorienting. Use macOS volume mixer to balance them, and consider headphones as the simplest fix.
-7. **Pedal shortcut conflicts** — some games intercept foot pedal input as a generic HID device. Test the pedal in the game before relying on it.
-8. **Interaction loop feels too slow** — if the total time from speaking to hearing a reply is more than a few seconds, check each stage in order: dictation speed, Discord message delivery, agent generation time, TTS latency. The bottleneck is usually TTS if you are using an online provider with a slow connection.
+**3.5mm cable audio quality** can degrade if the cable is cheap or the connection is loose.
+Use a short, shielded cable and seat both connectors fully.
+If you hear a hum or buzz, check for a ground loop — try a different port on the Windows PC or use a USB audio adapter on the macOS side.
 
 ## Links
 
@@ -368,4 +344,4 @@ The foot pedal workflow is for quick remarks; anything that requires precise ter
 - [Part 1: Gameplay Streaming](/build-your-own-ai-gaming-mate-part-1-gameplay-streaming/)
 - [Part 2: OpenClaw Browser Use](/build-your-own-ai-gaming-mate-part-2-openclaw-browser-use/)
 - [mlx-audio on GitHub](https://github.com/Blaizzy/mlx-audio)
-- [BlackHole virtual audio device](https://existential.audio/blackhole/)
+- [cliclick on GitHub](https://github.com/BlueM/cliclick)
