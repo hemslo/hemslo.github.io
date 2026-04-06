@@ -147,7 +147,6 @@ Second, you can scroll back through the session and see the full conversation, w
 ### Push-to-Activate Behavior
 
 macOS dictation activates on a double-click of the left Command key.
-This is the shortcut I use because it does not conflict with any game shortcuts — the game is running on Windows, not macOS.
 macOS runs only Discord, the browser, and OpenClaw, so there is very little risk of a shortcut collision.
 
 The activation shortcut puts the dictation overlay in whatever app currently has focus.
@@ -253,7 +252,7 @@ Generate speech using the saved voice:
 curl http://localhost:8000/v1/audio/speech \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-4bit",
+    "model": "mlx-community/Qwen3-TTS-12Hz-1.7B-Base-8bit",
     "input": "Okay. Yeah. I resent you. I love you. I respect you. But you know what? You blew it! And thanks to you.",
     "voice": "ai"
   }' \
@@ -301,17 +300,6 @@ By the time a ten-sentence reply finishes, the moment in the game has already pa
 
 If the agent tends to give longer answers, add an explicit instruction:
 `Keep replies to three sentences or fewer. Shorter is better.`
-
-### Streaming Versus Full-Buffer Playback
-
-Full-buffer playback waits for the entire reply text to arrive before speaking.
-This adds generation latency but produces a more natural delivery because the TTS can phrase the whole sentence correctly.
-
-Streaming playback starts speaking as soon as the first chunk of text is ready.
-Latency is lower, but sentence-level phrasing can sound fragmented if the TTS processes partial sentences.
-
-For a gaming companion, full-buffer playback is the better default.
-The generation time for short replies is small, and the improvement in delivery is worth the wait.
 
 ### Audio Routing While the Game Is Already Producing Sound
 
