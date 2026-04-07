@@ -109,7 +109,7 @@ For example, a Civ VI session playing as Victoria (Age of Steam):
 {
   "game": "Civilization VI",
   "leader": "Victoria (Age of Steam)",
-  "difficulty": "Emperor",
+  "difficulty": "Deity",
   "victory_target": "Domination",
   "era": "Industrial",
   "turn": 145,
@@ -122,8 +122,8 @@ For example, a Civ VI session playing as Victoria (Age of Steam):
   },
   "notes": [
     "Colonized three continents; harbor network active",
-    "Alliance with Rome expires turn 160",
-    "Zulu is the main military threat — eliminate next"
+    "Alliance with Egypt expires turn 160",
+    "Japan is the main military threat — eliminate next"
   ]
 }
 ```
