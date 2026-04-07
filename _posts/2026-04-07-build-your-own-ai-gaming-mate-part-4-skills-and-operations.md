@@ -3,15 +3,15 @@ layout: page
 title: "Build Your Own AI Gaming Mate Part 4: Skills and Operations"
 permalink: /build-your-own-ai-gaming-mate-part-4-skills-and-operations/
 description: |
-  Tune agent behavior, startup flow, and operational details so your AI gaming mate
-  is stable and enjoyable to use across real play sessions.
+  Shape agent skills, context management, and game state so your AI gaming mate
+  stays aware and improves across play sessions.
 category: build-your-own-ai-gaming-mate
 ---
 
 ## Introduction
 
 This post covers the layer that makes the system feel good to use over time:
-skills, orchestration, and operational polish.
+skills, context management, and game state.
 The previous posts set up the video pipeline, observation layer, and audio path.
 This one is about shaping the agent behavior that sits on top of all of that.
 
@@ -25,17 +25,17 @@ At the end of this post, you should have:
 2. Game-specific skills that make the companion feel aware of the game you are actually playing
 3. A reply length policy that works for voice output during gameplay
 4. A clear sense of when the companion should speak and when it should stay quiet
-5. A lightweight approach to game state and memory across a play session
-6. A repeatable startup sequence for the whole stack
+5. A per-game context file that captures setup, rules, and accumulated knowledge
 
 ## Why This Layer Matters
 
 Without this layer, the system may work technically but still feel awkward.
 A companion that takes too long to respond, speaks over critical gameplay moments,
-or forgets what you discussed five minutes ago is more distraction than help.
+or loses track of what you established earlier is more distraction than help.
 
-The skill and operations layer is where you shape timing, tone, interruption behavior,
-and recovery. It is the most opinionated part of the project and the hardest to copy
+The skill and context layer is where you shape timing, tone, interruption behavior,
+and what the companion carries forward between sessions.
+It is the most opinionated part of the project and the hardest to copy
 from someone else's setup directly, because it depends on the games you play and the
 kind of interaction you want.
 
@@ -158,100 +158,69 @@ Reserve proactive output for moments you specifically ask for it.
 
 ## Game State and Memory Management
 
-The context window is the companion's working memory.
-Everything it knows about the current session lives there.
-This is both a constraint and a useful framing.
+The key idea is simple: one dedicated Discord channel per game, one context file per channel.
 
-For most play sessions, the context window is large enough to hold the full conversation.
-Do not over-engineer a memory system before you have actually hit the limit.
-The first thing to optimize is keeping individual messages short,
-which keeps the context window clean longer.
+Create a channel named after the game — for example `game-civilization-6` — and instruct the agent to load the matching context file when it starts in that channel.
+The file lives at a predictable path, for example `context/game-civilization-6.md`.
 
-When you want the companion to remember a specific fact across turns, just tell it:
+### What Goes in the Context File
 
-> Remember: I am playing as Brazil, aiming for a Culture victory, and I have a strong military lead.
+The context file is the companion's persistent knowledge about the game.
+It starts small and grows as you play.
 
-The companion holds that in context and refers back to it throughout the session.
-No special tool is needed.
-This is more reliable than a structured memory system because it stays in the natural conversation flow.
+A minimal starting file covers:
 
-When the session gets long enough that older context starts falling out, the simplest fix
-is to ask the companion to summarize the session so far:
+1. **What game is running** — game name, current save or campaign, and your faction or character
+2. **How interaction works** — how you speak (voice via dictation, typed messages), what triggers a screenshot, reply length expectations
+3. **Generic rules for this game** — victory conditions, pacing, any standing instructions like "never guess exact tech counts from a screenshot"
 
-> Summarize what we have talked about in this session.
+For example, a starting `context/game-civilization-6.md` might look like:
 
-Paste that summary back as a user message at the start of the next session.
-It costs one manual step but keeps the companion oriented without any custom state management code.
+```markdown
+## Game
 
-For game-specific structured state — quest progress, build orders, alliance tracking —
-maintain a short plain-text note in Discord or a separate message.
-Update it yourself as the session progresses, then paste it in when you want the companion
-to use it.
-The companion does not need write access to external state to be useful.
-What it needs is accurate information at the time of the question.
+Civilization VI. Current save: Emperor difficulty, Deity later.
+Playing as Brazil. Aiming for Culture victory.
 
-## Startup Flow
+## Interaction
 
-The whole stack needs to start in a specific order, and that order matters.
-If something starts in the wrong sequence, diagnosing the problem is annoying.
-Make the startup order explicit and repeatable.
+- Say "take a look" to trigger a screenshot
+- Keep replies to three sentences unless I ask for a full analysis
+- Use the correct Civ VI vocabulary: districts, wonders, governors, great people
 
-Recommended startup sequence:
+## Rules
 
-1. **Windows machine:** start MediaMTX, then launch OBS and begin streaming
-2. **macOS machine:** open Chrome and navigate to the stream URL, confirm playback
-3. **macOS machine:** start the mlx-audio server if using local TTS
-4. **macOS machine:** start the OpenClaw Gateway
-5. **macOS machine:** open Discord and confirm the agent is connected
+- Do not guess exact tech or civic progress from a screenshot; ask me for numbers
+- When I give you numbers, evaluate position directly without hedging
+- Victory routes to watch: Culture, Science, Domination
+```
 
-Verify each step before moving to the next.
-A stream that is not publishing before OpenClaw starts means OpenClaw will open a blank tab.
-An mlx-audio server that is not running before the agent starts means TTS calls will fail silently.
+### Growing the Context File Over Time
 
-Create a short checklist in a note or sticky, or map it to a script.
-Starting the same way every time removes one source of session-opening friction.
+As the game progresses, edge cases and patterns emerge that the model does not handle well out of the box.
+Each time you notice a gap — a bad guess, wrong vocabulary, a missed rule — add a note to the context file.
 
-### Verifying the Loop Is Live
+Some examples of what accumulates:
 
-Once the stack is running, send one message in Discord and wait for a spoken reply.
-That single end-to-end test confirms:
+- **Faction-specific rules:** "Menelik II gets +10 appeal from Holy Sites; factor that into district placement advice"
+- **Observed mistakes:** "Stop recommending Theater Squares before Classical era; I already have enough culture output"
+- **Session-specific state:** current score, key alliances, which victory route I am committed to
 
-1. OBS is publishing
-2. MediaMTX is serving
-3. Chrome is showing the stream
-4. OpenClaw can see the tab
-5. Discord is delivering messages to the agent
-6. TTS is producing audio
+The file is plain text, so you can update it between sessions without any tooling.
+The companion loads it fresh at the start of each channel session and treats it as authoritative.
 
-If any of those steps fails, the loop is broken.
-Test them in order until you find the break.
-Five minutes of startup verification saves a lot of debugging mid-session.
+### Extracting Knowledge Into Skills
 
-## Operational Stability Over Long Sessions
+Over time, the context file will accumulate enough game-specific logic that it starts to feel like a reference document.
+That is the signal to start extracting reusable pieces as skills.
 
-A session that works for ten minutes is not the same as one that holds up for three hours.
-These are the failure modes that surface only with real play time.
+The extraction pattern:
 
-**Stream lag accumulating in the browser tab:**
-The MediaMTX WebRTC player can accumulate latency in the browser over a long session.
-If the screenshot the companion takes looks noticeably behind the game, reload the tab.
-The stream reconnects in a few seconds.
+1. **Start game-specific.** A Civ VI advisor skill knows victory conditions, evaluates position from numbers, and avoids guessing from screenshots. It is narrowly scoped and correct for one game.
+2. **Generalize when the pattern repeats.** After building a Civ VI skill, you will notice that other turn-based strategy games share the same core pattern: evaluate position from explicit numbers, advise on win condition priority, track long-term goals. Extract a turn-based strategy skill and make the Civ VI skill a specialization of it.
+3. **Keep the context file for what is session-specific.** Skills carry forward general game knowledge. The context file carries forward the state of the current playthrough. Both are needed; they are not substitutes.
 
-**TTS queue stalling:**
-If the mlx-audio server stops responding, restart it without shutting down the Gateway.
-The Gateway reconnects on the next TTS request.
-
-**Context length approaching limits:**
-Ask the companion to summarize the session when replies start losing context from earlier.
-Paste the summary back in as a fresh starting point.
-
-**Dictation accuracy degrading:**
-macOS dictation accuracy can drop if the session has been running for a long time.
-A restart of the dictation feature (disable and re-enable in System Settings) usually fixes it.
-
-**Discord TTS play button moving:**
-If Discord's message list scrolls, the play button for older replies moves off-screen.
-Use the right pedal only for the most recent reply, or scroll the channel so the current reply is visible before pressing the pedal.
+This progression — context file first, skill extraction second — lets you start useful immediately without over-engineering the setup before you understand the game's actual interaction patterns.
 
 ## Links
 
