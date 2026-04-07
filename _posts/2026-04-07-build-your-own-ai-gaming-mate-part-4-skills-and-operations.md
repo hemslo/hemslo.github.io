@@ -95,7 +95,7 @@ A minimal context file for Civ VI:
 - Victory routes to consider: Domination, Culture, Science, Diplomatic, Religion
 ```
 
-Everything in that file applies regardless of which leader you pick or which game you are in.
+Everything in that file applies regardless of which leader you pick or which playthrough you are in.
 It is the standing instruction set for the game, not the record of a particular session.
 
 ### The State File: The Current Session
