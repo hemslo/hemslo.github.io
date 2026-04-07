@@ -112,7 +112,7 @@ For example, a Civ VI session playing as Victoria (Age of Steam):
   "difficulty": "Deity",
   "victory_target": "Domination",
   "era": "Industrial",
-  "turn": 145,
+  "turn": 203,
   "scores": {
     "military": 1507,
     "science": 240,
