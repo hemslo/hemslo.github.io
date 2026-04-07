@@ -163,6 +163,27 @@ The extraction pattern:
 This progression — context file and state file first, skill extraction second — lets you start
 useful immediately without over-engineering before you understand the game's actual interaction patterns.
 
+## Leveling Up Together
+
+There is a side effect to this process that is worth naming.
+
+Building skills, refining the context file, fixing model mistakes, and updating the state file
+after each session is not maintenance work.
+It is a progression loop.
+Every session surfaces something new: a vocabulary gap, a rule the model bends, a pattern in how
+you like to play.
+Each fix makes the companion slightly more tuned to you.
+
+It feels a lot like leveling up in an RPG, except the character you are leveling up is the agent.
+You are accumulating knowledge, expanding its repertoire, and watching it get better at reading
+your style.
+That loop is genuinely addictive.
+The companion you have after thirty sessions is meaningfully different from the one you started with,
+and the difference came from playing together.
+
+That is, in the end, the most addictive part of the whole system.
+Not the tech — the progression.
+
 ## Links
 
 - [Part 0: Overview](/build-your-own-ai-gaming-mate-part-0-overview/)

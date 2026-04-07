@@ -338,6 +338,7 @@ Position the cursor over the play button once and use the pedal for every subseq
 - [Part 0: Overview](/build-your-own-ai-gaming-mate-part-0-overview/)
 - [Part 1: Gameplay Streaming](/build-your-own-ai-gaming-mate-part-1-gameplay-streaming/)
 - [Part 2: OpenClaw Browser Use](/build-your-own-ai-gaming-mate-part-2-openclaw-browser-use/)
+- [Part 4: Skills and Operations](/build-your-own-ai-gaming-mate-part-4-skills-and-operations/)
 - [mlx-audio on GitHub](https://github.com/Blaizzy/mlx-audio)
 - [OpenClaw TTS configuration reference](https://docs.openclaw.ai/gateway/configuration-reference#tts-text-to-speech)
 - [cliclick on GitHub](https://github.com/BlueM/cliclick)
