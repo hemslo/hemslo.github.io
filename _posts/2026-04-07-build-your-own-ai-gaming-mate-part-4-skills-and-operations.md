@@ -3,8 +3,8 @@ layout: page
 title: "Build Your Own AI Gaming Mate Part 4: Skills and Operations"
 permalink: /build-your-own-ai-gaming-mate-part-4-skills-and-operations/
 description: |
-  Shape agent skills, context management, and game state so your AI gaming mate
-  stays aware and improves across play sessions.
+  Design game-specific skills, a context file that describes how to play, and a
+  lightweight state file that tracks the current session for your AI gaming mate.
 category: build-your-own-ai-gaming-mate
 ---
 
@@ -21,206 +21,147 @@ For an overview of the full system, see [Part 0: Overview](/build-your-own-ai-ga
 
 At the end of this post, you should have:
 
-1. A clear interactive skill structure that keeps responses fast and focused
-2. Game-specific skills that make the companion feel aware of the game you are actually playing
-3. A reply length policy that works for voice output during gameplay
-4. A clear sense of when the companion should speak and when it should stay quiet
-5. A per-game context file that captures setup, rules, and accumulated knowledge
+1. Game-specific skills that make the companion feel aware of the game you are actually playing
+2. A per-game context file that describes how to interact and the standing rules for that game
+3. A lightweight JSON state file that tracks what is happening in the current session
 
 ## Why This Layer Matters
 
 Without this layer, the system may work technically but still feel awkward.
-A companion that takes too long to respond, speaks over critical gameplay moments,
-or loses track of what you established earlier is more distraction than help.
+A companion that uses the wrong vocabulary, gives advice that ignores your actual game state,
+or loses track of rules you have already established is more distraction than help.
 
-The skill and context layer is where you shape timing, tone, interruption behavior,
-and what the companion carries forward between sessions.
+The skill and context layer is where you encode what the companion knows about the game,
+how you want it to interact, and what is happening right now in the current session.
 It is the most opinionated part of the project and the hardest to copy
 from someone else's setup directly, because it depends on the games you play and the
 kind of interaction you want.
 
 Think of this post as a set of principles with concrete examples, not a fixed recipe.
 
-## Interactive Skill Design
-
-OpenClaw skills split into two categories: interactive skills and agent skills.
-Interactive skills are the backbone of the conversational loop.
-They run synchronously — the agent processes your message, picks the right skill,
-and replies.
-
-The most important thing to get right is scope.
-An interactive skill should do one thing and do it quickly.
-A skill that tries to answer the question, look up lore, check the stream, and summarize
-the match history in one pass will feel slow and unpredictable.
-
-Design interactive skills around the questions you actually ask during play:
-
-1. **React** — respond to a remark or short question without consulting external state
-2. **Observe** — take a screenshot of the stream and describe what is on screen
-3. **Recall** — answer a question using context already in the conversation
-
-The react skill is the default.
-It covers most of what you say during gameplay: short comments, quick questions,
-and back-and-forth remarks.
-Because it does not call any tools, it is fast.
-Keep the model small and the temperature low for this skill.
-You want consistency and speed, not creativity.
-
-The observe skill is the one that uses the browser tool to take a screenshot.
-Design it to be explicit: the companion only looks at the screen when you ask it to.
-Ask "take a look" or "what do you see?" to trigger it.
-Passive, unsolicited observation runs on every reply only if you want the latency and token cost.
-
-The recall skill helps when you reference something from earlier in the session:
-"what did you say about my gold income?" or "how many turns did you say I had?".
-A good recall implementation just searches the conversation history.
-It does not need to call any external tools unless your session transcripts live outside the context window.
-
 ## Game-Specific Skill Design
 
-Generic companion behavior gets you halfway there.
-The other half comes from skills that know something about the game you are playing.
+Skills in this setup are game-specific.
+There are no generic interactive skills — all interaction conventions live in the context file.
+Skills exist to encode knowledge about a particular game.
 
-A game-specific skill is just an interactive skill with a specialized prompt or a narrow
-tool set. For example:
+A game-specific skill carries a specialized prompt and a narrow tool set.
+For example, a Civ VI advisor skill knows the victory conditions, evaluates your position
+when you give it numbers, and avoids guessing exact tech or civic progress from a screenshot alone.
 
-1. **Civ VI advisor** — knows the victory conditions, evaluates your position if you give it numbers, and avoids guessing exact tech counts from a screenshot alone
-2. **Combat commentator** — knows the game's faction names, unit types, and common tactical patterns; uses the right vocabulary
-3. **Quest tracker** — accepts updates you dictate ("I finished the main story quest") and keeps a short structured list in the conversation
-
-You do not need to build all of these at once.
+You do not need to build all skills at once.
 Start with a single game and a single skill that covers the questions you ask most.
-Add vocabulary by listing proper nouns in the system prompt: hero names, faction names,
-ability names, and any term that macOS dictation gets wrong.
+Add vocabulary by listing proper nouns in the skill's system prompt: leader names, district names,
+unit names, and any term that voice transcription gets wrong.
 Once the model knows the vocabulary, transcription errors become easier to spot and correct.
 
-For games with publicly available data, you can include a short reference block in the
-system prompt.
-For example, a tech tree summary, a table of unit costs, or a list of faction bonuses.
+For games with publicly available data, you can include a short reference block in the skill.
+For example, a tech tree summary, a table of unit costs, or a list of leader abilities.
 Keep it short: a few dozen lines covers the facts the companion actually needs.
 Anything longer starts to dilute the prompt and slow things down.
 
-## Short Versus Long Replies
-
-Reply length is one of the highest-leverage settings in the whole system.
-
-The companion is speaking over a game.
-Two to four sentences is the right range for almost every interactive reply.
-Anything longer takes more time to generate, more time to speak, and is harder to follow
-while you are still playing.
-
-Add an explicit instruction to the system prompt:
-
-```
-Keep replies to three sentences or fewer.
-If you need to say more, break it into a follow-up.
-Shorter is better.
-```
-
-Short replies also reduce the awkward gap between asking something and being back in the game.
-The companion speaks, stops, and you are still in the same moment.
-A long reply means the game has moved on before the companion finishes speaking.
-
-There is one exception: analysis on demand.
-If you pause the game and ask for a detailed evaluation, longer is fine.
-The companion can tell from context that you are waiting for a real answer.
-You can give it explicit permission in the prompt:
-
-```
-For analysis questions where the user has paused or asked for a full breakdown,
-longer replies are appropriate.
-For all other replies, keep it to three sentences.
-```
-
-## When the Mate Should Speak and When It Should Stay Quiet
-
-The companion should not volunteer observations constantly.
-If it comments on every frame, every trade route, and every unit move, it becomes noise.
-
-The simplest rule: speak when spoken to.
-The companion replies when you send a message.
-It does not interrupt on its own.
-
-That rule alone handles most of the awkwardness.
-The companion is not a co-pilot making live calls.
-It is a friend on the couch — present, watching, ready to react when you say something,
-but not narrating everything you do.
-
-Beyond that baseline, there are two moments where proactive output makes sense:
-
-1. **You ask it to watch something specific.** "Tell me if my score drops below 500." The companion can set a lightweight reminder in the session and flag it when you next interact.
-2. **You ask for a hot-take after a major event.** "I just won the battle — what do you think?" Triggering commentary on demand is better than building a continuous event-detection loop.
-
-Avoid building event detection that triggers the companion unprompted.
-It is tempting — detecting "you just took damage" or "enemy hero spotted" sounds useful.
-In practice, unsolicited interruptions during tense gameplay are more annoying than helpful.
-Reserve proactive output for moments you specifically ask for it.
-
 ## Game State and Memory Management
 
-The key idea is simple: one dedicated Discord channel per game, one context file per channel.
+The key idea is simple: one dedicated Discord channel per game, with two files the agent loads
+at the start of each session.
 
-Create a channel named after the game — for example `game-civilization-6` — and instruct the agent to load the matching context file when it starts in that channel.
-The file lives at a predictable path, for example `context/game-civilization-6.md`.
+- **Context file** — describes how to play the game: interaction conventions, standing rules, vocabulary
+- **State file** — records what is happening right now: current civilization, leader, score, active goals
 
-### What Goes in the Context File
+Create a channel named after the game — for example `game-civilization-6` — and instruct the agent
+to load both files when it starts in that channel.
+The files live at predictable paths, for example `context/game-civilization-6.md` and
+`state/game-civilization-6.json`.
 
-The context file is the companion's persistent knowledge about the game.
-It starts small and grows as you play.
+### The Context File: How to Play
 
-A minimal starting file covers:
+The context file describes the setup that stays stable across sessions.
+It does not record who you are playing as — that goes in the state file.
+What it records is how the companion should behave when playing this game.
 
-1. **What game is running** — game name, current save or campaign, and your faction or character
-2. **How interaction works** — how you speak (voice via dictation, typed messages), what triggers a screenshot, reply length expectations
-3. **Generic rules for this game** — victory conditions, pacing, any standing instructions like "never guess exact tech counts from a screenshot"
-
-For example, a starting `context/game-civilization-6.md` might look like:
+A minimal context file for Civ VI:
 
 ```markdown
-## Game
-
-Civilization VI. Current save: Emperor difficulty, Deity later.
-Playing as Brazil. Aiming for Culture victory.
-
 ## Interaction
 
 - Say "take a look" to trigger a screenshot
 - Keep replies to three sentences unless I ask for a full analysis
-- Use the correct Civ VI vocabulary: districts, wonders, governors, great people
+- Use correct Civ VI vocabulary: districts, wonders, governors, great people, city-states
 
 ## Rules
 
 - Do not guess exact tech or civic progress from a screenshot; ask me for numbers
 - When I give you numbers, evaluate position directly without hedging
-- Victory routes to watch: Culture, Science, Domination
+- Victory routes to consider: Domination, Culture, Science, Diplomatic, Religion
 ```
 
-### Growing the Context File Over Time
+Everything in that file applies regardless of which leader you pick or which game you are in.
+It is the standing instruction set for the game, not the record of a particular session.
 
-As the game progresses, edge cases and patterns emerge that the model does not handle well out of the box.
-Each time you notice a gap — a bad guess, wrong vocabulary, a missed rule — add a note to the context file.
+### The State File: The Current Session
 
-Some examples of what accumulates:
+The state file is a lightweight JSON document that tracks the current playthrough.
+Think of it as a game save that the agent reads and updates as the session progresses.
 
-- **Faction-specific rules:** "Menelik II gets +10 appeal from Holy Sites; factor that into district placement advice"
-- **Observed mistakes:** "Stop recommending Theater Squares before Classical era; I already have enough culture output"
-- **Session-specific state:** current score, key alliances, which victory route I am committed to
+For example, a Civ VI session playing as Victoria (Age of Steam):
 
-The file is plain text, so you can update it between sessions without any tooling.
-The companion loads it fresh at the start of each channel session and treats it as authoritative.
+```json
+{
+  "game": "Civilization VI",
+  "leader": "Victoria (Age of Steam)",
+  "difficulty": "Emperor",
+  "victory_target": "Domination",
+  "era": "Industrial",
+  "turn": 145,
+  "scores": {
+    "military": 1507,
+    "science": 240,
+    "culture": 291,
+    "gold": 1690,
+    "faith": 1313
+  },
+  "notes": [
+    "Colonized three continents; harbor network active",
+    "Alliance with Rome expires turn 160",
+    "Zulu is the main military threat — eliminate next"
+  ]
+}
+```
+
+When you give the agent new numbers or report a major event, it updates the state file.
+At the start of the next session, the agent loads both files and picks up exactly where you left off.
+No summary step needed, no pasting context back in.
+
+### Growing Both Files Over Time
+
+The context file grows when you discover rules or patterns that the model does not handle well.
+Each time you notice a gap — wrong advice, missed vocabulary, a bad assumption — add a line to the context file.
+
+Some examples of what accumulates in the context file:
+
+- **Leader-specific rules:** "Victoria's Industrial Zones get +4 production from Harbour adjacency; factor that into district placement"
+- **Observed model mistakes:** "Do not recommend building Encampments when I already have military dominance; focus on infrastructure"
+- **Vocabulary corrections:** "Use 'Suzerain' not 'patron' when referring to city-state relationships"
+
+The state file updates as the game progresses: score changes, new alliances, completed objectives,
+next strategic priority.
+Keep notes in the state file short and actionable.
+They are reminders for the agent, not a full play log.
 
 ### Extracting Knowledge Into Skills
 
-Over time, the context file will accumulate enough game-specific logic that it starts to feel like a reference document.
+Over time, the context file will accumulate enough game-specific logic that it starts to feel like
+a reference document.
 That is the signal to start extracting reusable pieces as skills.
 
 The extraction pattern:
 
 1. **Start game-specific.** A Civ VI advisor skill knows victory conditions, evaluates position from numbers, and avoids guessing from screenshots. It is narrowly scoped and correct for one game.
 2. **Generalize when the pattern repeats.** After building a Civ VI skill, you will notice that other turn-based strategy games share the same core pattern: evaluate position from explicit numbers, advise on win condition priority, track long-term goals. Extract a turn-based strategy skill and make the Civ VI skill a specialization of it.
-3. **Keep the context file for what is session-specific.** Skills carry forward general game knowledge. The context file carries forward the state of the current playthrough. Both are needed; they are not substitutes.
+3. **Keep the context file for interaction conventions and game-specific rules.** Keep the state file for session data. Skills carry forward general game knowledge that is stable and reusable.
 
-This progression — context file first, skill extraction second — lets you start useful immediately without over-engineering the setup before you understand the game's actual interaction patterns.
+This progression — context file and state file first, skill extraction second — lets you start
+useful immediately without over-engineering before you understand the game's actual interaction patterns.
 
 ## Links
 
